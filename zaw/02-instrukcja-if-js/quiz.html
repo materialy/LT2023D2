@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quiz — Instrukcja warunkowa if…else w JavaScript</title>
+<style>
+/* Wspólny wygląd ściągi i quizu materiałów z lekcji („zeszyt w kratkę”, tokeny jak w prezentacji skilla
+   interaktywna-prezentacja). Wklejany przez materialy_eksport.py w miejsce {{STYL}}. */
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+  --sans:"Bricolage Grotesque","Segoe UI",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",Consolas,"Courier New",monospace;
+  --hand:"Caveat","Comic Sans MS",cursive;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --marker-ink:#1D2A5C; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+    --tag:#C29BFF; --attr:#7FB0FF; --val:#6FD8A2;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --marker-ink:#1D2A5C; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  --tag:#C29BFF; --attr:#7FB0FF; --val:#6FD8A2;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.6;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.sheet{max-width:880px;margin:0 auto;padding-block:40px 64px;padding-left:clamp(20px,6vw,72px);position:relative}
+.sheet::before{content:"";position:absolute;top:0;bottom:0;left:clamp(6px,2.5vw,32px);width:2px;background:var(--margin);opacity:.7}
+h1,h2,h3{font-weight:800;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+h1{font-size:clamp(2.1rem,6vw,3.4rem);margin:.1em 0 .3em}
+h2{font-size:clamp(1.45rem,3.6vw,2rem);margin:2.2em 0 .5em;display:flex;gap:.5em;align-items:baseline}
+h2 .no{font-family:var(--mono);font-size:.6em;color:var(--margin);font-weight:600}
+h3{font-size:1.15rem;margin:1.4em 0 .4em}
+p,li{max-width:68ch}
+a{color:var(--ink);font-weight:600}
+.eyebrow{font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0}
+.lead{font-size:1.15rem;color:var(--ink-soft)}
+.meta{color:var(--ink-soft);font-size:.95rem}
+.note{font-family:var(--hand);font-size:1.55rem;line-height:1.15;color:var(--margin);display:inline-block;transform:rotate(-1.2deg);margin:.2em 0}
+mark{background:linear-gradient(transparent 45%,var(--marker) 45%,var(--marker) 90%,transparent 90%);color:inherit;padding:0 .1em}
+code{font-family:var(--mono);font-size:.88em;background:var(--code-bg);padding:.05em .3em;border-radius:2px;overflow-wrap:anywhere;font-variant-ligatures:none}
+pre{font-family:var(--mono);font-size:.9rem;line-height:1.55;background:var(--code-bg);border:2px solid var(--ink);box-shadow:5px 5px 0 var(--ink);padding:.9em 1.1em;margin:1em 0 1.4em;overflow-x:auto;font-variant-ligatures:none}
+pre code{background:none;padding:0;font-size:inherit;overflow-wrap:normal}
+.t{color:var(--tag)}.a{color:var(--attr)}.v{color:var(--val)}.cm{color:var(--ink-soft);font-style:italic}.num{color:var(--bad)}
+.hl{background:var(--marker);color:var(--marker-ink)}
+.hl .t,.hl .a,.hl .v,.hl .cm,.hl .num{color:var(--marker-ink)}
+kbd{font-family:var(--mono);font-size:.85em;border:1.5px solid var(--line);border-bottom-width:3px;padding:0 .35em;background:var(--panel)}
+
+.links-top{display:flex;flex-wrap:wrap;gap:.5em;margin:.4em 0 1em}
+.links-top a,.links-top button{font:inherit;font-weight:600;color:var(--ink);cursor:pointer;border:2px solid var(--ink);background:var(--panel);padding:.3em .8em;text-decoration:none;box-shadow:3px 3px 0 var(--ink)}
+
+.toc{display:flex;flex-wrap:wrap;gap:.35em .5em;margin:0 0 1.2em;font-size:.92rem}
+.toc a{border:1.5px solid var(--line);background:var(--panel);padding:.15em .6em;text-decoration:none;font-weight:600}
+.toc a .no{font-family:var(--mono);color:var(--margin);font-size:.85em;margin-right:.35em}
+h2[id]{scroll-margin-top:1em}
+
+.done{list-style:none;padding:0;display:grid;gap:.6em;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:1.2em 0}
+.done li{border:2px solid var(--ink);background:var(--panel);padding:.8em 1em;max-width:none}
+.done b{font-family:var(--mono);display:block;color:var(--margin);font-weight:600}
+
+.tbl-wrap{overflow-x:auto;margin:1em 0 1.4em}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1.5px solid var(--line);padding:.45em .7em;text-align:left;vertical-align:top;background:var(--panel)}
+th{font-weight:600}
+td code{white-space:nowrap}
+.yes{color:var(--ok);font-weight:600}.no-c{color:var(--bad);font-weight:600}
+
+.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:1.4em;align-items:start}
+.split > *{min-width:0}
+.card{border:2px solid var(--ink);background:var(--panel);padding:.9em 1.1em;margin:1em 0}
+.split .card{margin:0}
+.card h3{margin-top:0}
+.card.warn{border-color:var(--bad)}
+.card.warn h3{color:var(--bad)}
+
+.steps{counter-reset:s;list-style:none;padding:0;margin:1em 0}
+.steps > li{counter-increment:s;padding:.35em 0 .35em 2.4em;position:relative;max-width:none}
+.steps > li::before{content:counter(s);position:absolute;left:0;top:.3em;width:1.7em;height:1.7em;border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--mono);font-size:.85rem;font-weight:600;background:var(--panel)}
+
+.check{list-style:none;padding:0}
+.check li{padding:.25em 0 .25em 1.7em;position:relative}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.bad-list li::before{content:"✗"}
+
+dl.gloss{display:grid;grid-template-columns:minmax(7em,max-content) 1fr;gap:.45em 1.2em;margin:1em 0;border:2px solid var(--ink);background:var(--panel);padding:.9em 1.1em}
+dl.gloss dt{font-family:var(--mono);font-weight:600;color:var(--margin)}
+dl.gloss dd{margin:0}
+
+details{border:2px solid var(--ink);background:var(--panel);margin:.6em 0}
+summary{cursor:pointer;padding:.65em 1em;font-weight:600;list-style:none;display:flex;gap:.7em;align-items:baseline;flex-wrap:wrap}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";font-family:var(--mono);color:var(--margin);font-weight:600;width:1em;flex:none}
+details[open] summary::before{content:"−"}
+details[open] summary{border-bottom:1.5px dashed var(--line)}
+details .ans{padding:.6em 1em .8em 2.7em}
+details .ans p{margin:.2em 0}
+details.hint{border-width:1.5px;border-style:dashed;margin:.4em 0}
+details.hint summary{font-weight:600;padding:.4em .8em;font-size:.95rem}
+details.hint .ans{padding:.5em .9em .7em 2.2em}
+.lvl{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--margin);padding:.1em .5em;border-radius:99px}
+summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.footer{margin-top:3em;padding-top:1em;border-top:2px solid var(--ink);font-size:.95rem;color:var(--ink-soft)}
+
+.theme{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:5;width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-size:1.2rem;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+
+@media (max-width:720px){
+  .split{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  body{font-size:16px}
+  .sheet{padding-block:56px 48px;padding-left:24px}
+  .sheet::before{left:8px}
+  pre{font-size:.8rem;padding:.7em .8em;box-shadow:3px 3px 0 var(--ink)}
+  td code{white-space:normal}
+  dl.gloss{grid-template-columns:1fr;gap:.1em}
+  dl.gloss dd{margin-bottom:.5em}
+  details .ans{padding-left:1.2em}
+}
+@media print{
+  /* zawsze jasny motyw na papierze (ciemny dałby jasny tekst na białej kartce) */
+  :root,:root[data-theme],:root:not([data-theme="light"]){
+    --paper:#FFFFFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+    --margin:#D9433B; --marker:#FFE45C; --marker-ink:#1D2A5C; --code-bg:#EEF2FA; --line:#C5D3EA;
+    --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+    --tag:#7A3FC2; --attr:#2563C9; --val:#1F8A5B;
+    color-scheme:light;
+  }
+  body{background:none;font-size:11pt;line-height:1.45;padding:0}
+  .sheet{max-width:none;padding:0}
+  .sheet::before,.theme,.links-top,.toc{display:none}
+  h1{font-size:24pt}
+  h2{font-size:16pt;margin:1.3em 0 .4em}
+  h2,h3{break-after:avoid}
+  pre{font-size:8.5pt}
+  pre,.done li,.card,details{box-shadow:none;break-inside:avoid}
+  details .ans{display:block}
+}
+
+.q{border:2px solid var(--ink);background:var(--panel);box-shadow:5px 5px 0 var(--ink);padding:1em 1.1em;margin:0 0 1.4em}
+.q h2{white-space:pre-wrap;font-size:1.15rem;margin:0 0 .7em;display:block;letter-spacing:0;line-height:1.35}
+.q h2 .no{margin-right:.5em}
+.opts{display:grid;gap:.5em}
+.opts button{white-space:pre-wrap;text-align:left;font:inherit;color:inherit;background:var(--paper);border:2px solid var(--ink);padding:.6em .9em;cursor:pointer}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button:disabled{cursor:default}
+.opts button.ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.opts button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.opts button.ok code,.opts button.bad code{background:rgba(255,255,255,.2);color:inherit}
+.why{display:none;margin:.8em 0 0;padding-left:.9em;border-left:4px solid var(--margin)}
+.q.answered .why{display:block}
+.q.wrong{border-color:var(--bad)}
+.score{position:sticky;bottom:0;z-index:2;background:var(--panel);border:2px solid var(--ink);padding:.7em 1em;display:flex;flex-wrap:wrap;gap:.6em;align-items:center;justify-content:space-between}
+.score .btns{display:flex;gap:.5em;flex-wrap:wrap}
+.score button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.score button.primary{background:var(--ink);color:var(--paper)}
+.score button[hidden]{display:none}
+.q .temat{margin:0 0 .3em;font-size:.85rem}
+.los[hidden]{display:none}
+.los .tematy{display:grid;gap:.2em;margin:.2em 0 .8em}
+.los label{display:flex;gap:.55em;align-items:baseline;cursor:pointer}
+.los input{accent-color:var(--margin);width:1.1em;height:1.1em;flex:none}
+.los select,.los button{font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.3em .6em}
+.los button{background:var(--ink);color:var(--paper);padding:.45em 1em;cursor:pointer;box-shadow:3px 3px 0 var(--margin);margin-top:.4em}
+</style>
+</head>
+<body>
+<button class="theme" id="theme" type="button" aria-label="Zmień motyw jasny/ciemny">◐</button>
+<main class="sheet">
+  <p class="eyebrow">Quiz</p>
+  <h1>Instrukcja warunkowa if…else w JavaScript</h1>
+  <p class="links-top"><a href="sciaga.html">Ściąga</a><a href="prezentacja.html">Prezentacja</a></p>
+  <p class="lead">Kliknij odpowiedź, a od razu zobaczysz, czy jest dobra, i dlaczego. Na końcu możesz poprawić tylko pytania z błędem.</p>
+  <div class="card los" id="los" hidden>
+    <h3>Z których zagadnień?</h3>
+    <div class="tematy"></div>
+    <label>Liczba pytań: <select id="ile"></select></label>
+    <button type="button" id="losuj">Losuj nowy zestaw</button>
+  </div>
+  <div id="quiz"></div>
+  <div class="score" aria-live="polite"><span id="wynik"></span>
+    <span class="btns"><button type="button" class="primary" id="popraw" hidden>Popraw błędne</button><button type="button" id="reset">Od nowa</button></span>
+  </div>
+</main>
+<script>
+(function () {
+  const WSZYSTKIE = [{"pytanie": "wiek = 10. Kod: if (wiek < 6) A; else if (wiek < 12) B; else C. Co się wykona?", "odpowiedzi": ["A", "B", "C", "B i C"], "poprawna": 1, "wyjasnienie": "10 < 6 to fałsz, 10 < 12 to prawda. Wykonuje się pierwsza prawdziwa gałąź, else jest pomijane."}, {"pytanie": "Który operator sprawdza, czy wartości są równe i mają ten sam typ?", "odpowiedzi": ["=", "==", "=>", "==="], "poprawna": 3, "wyjasnienie": "=== to ścisła równość. == zamienia typy przed porównaniem, a = przypisuje."}, {"pytanie": "Jaki jest wynik porównania \"7\" === 7?", "odpowiedzi": ["false", "true", "7", "błąd składni"], "poprawna": 0, "wyjasnienie": "Lewa strona to tekst, prawa liczba. Ścisła równość wymaga tego samego typu."}, {"pytanie": "Kiedy warunek a && b jest prawdziwy?", "odpowiedzi": ["Gdy choć jeden jest prawdziwy", "Gdy oba są prawdziwe", "Gdy oba są fałszywe", "Zawsze"], "poprawna": 1, "wyjasnienie": "&& to „i”: muszą być spełnione oba warunki."}, {"pytanie": "Kiedy warunek a || b jest fałszywy?", "odpowiedzi": ["Gdy a jest prawdziwe", "Gdy b jest prawdziwe", "Gdy oba są fałszywe", "Nigdy"], "poprawna": 2, "wyjasnienie": "|| to „lub”: wystarczy jeden prawdziwy warunek, więc fałsz wychodzi tylko przy dwóch fałszach."}, {"pytanie": "Co jest nie tak w warunku if (wiek = 18)?", "odpowiedzi": ["Brakuje średnika", "Brakuje else", "= przypisuje zamiast porównywać", "Nic, kod jest poprawny"], "poprawna": 2, "wyjasnienie": "Pojedyncze = wpisuje 18 do zmiennej i warunek zawsze jest prawdziwy. Porównanie to ===."}, {"pytanie": "Ile bloków najwyżej wykona się w łańcuchu if / else if / else?", "odpowiedzi": ["Dokładnie jeden", "Wszystkie prawdziwe", "Zawsze pierwszy", "Zawsze ostatni"], "poprawna": 0, "wyjasnienie": "Po pierwszym prawdziwym warunku reszta łańcucha jest pomijana."}, {"pytanie": "Jaki jest wynik wyrażenia !(5 > 3)?", "odpowiedzi": ["true", "false", "5", "undefined"], "poprawna": 1, "wyjasnienie": "5 > 3 to true, a ! odwraca wartość na false."}, {"pytanie": "Dlaczego if (wiek < 18) przed else if (wiek < 12) to błąd?", "odpowiedzi": ["Nie wolno mieć dwóch else if", "Dziecko 10 lat wpadnie już w < 18", "< 12 musi być w else", "To nie jest błąd"], "poprawna": 1, "wyjasnienie": "Każdy wiek poniżej 12 jest też poniżej 18, więc druga gałąź nigdy się nie wykona."}, {"pytanie": "Którą gałąź można zostawić bez warunku?", "odpowiedzi": ["if", "else if", "żadną", "else"], "poprawna": 3, "wyjasnienie": "else nie ma warunku: łapie wszystko, czego nie złapały gałęzie wyżej."}], LOS = null;
+  let DANE = WSZYSTKIE, stan = [];   // stan: null = bez odpowiedzi, true = dobrze, false = źle
+  const box = document.getElementById("quiz"), wynik = document.getElementById("wynik"), popraw = document.getElementById("popraw");
+  const root = document.documentElement;
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[c]));
+  const fmt = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+  function show() {
+    if (!DANE.length) { wynik.textContent = "Zaznacz co najmniej jedno zagadnienie."; popraw.hidden = true; return; }
+    const done = stan.filter(x => x !== null).length, good = stan.filter(x => x === true).length, bad = stan.filter(x => x === false).length;
+    wynik.textContent = done < DANE.length ? "Odpowiedziano: " + done + " z " + DANE.length + " · dobrze: " + good
+      : "Wynik: " + good + " / " + DANE.length + (good === DANE.length ? " — komplet!" : "");
+    popraw.hidden = !(done === DANE.length && bad > 0);
+    popraw.textContent = "Popraw błędne (" + bad + ")";
+  }
+  function question(i) {
+    const q = DANE[i], el = document.createElement("section");
+    el.className = "q";
+    el.innerHTML = (q.temat ? "<p class=\"meta temat\">" + esc(q.temat) + "</p>" : "") + "<h2><span class=\"no\">" + String(i + 1).padStart(2, "0") + "</span>" + fmt(q.pytanie) + "</h2><div class=\"opts\"></div>"
+      + "<p class=\"why\">" + fmt(q.wyjasnienie || "") + "</p>";
+    const opts = el.querySelector(".opts");
+    q.odpowiedzi.forEach((a, j) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.innerHTML = fmt(a);
+      b.addEventListener("click", () => {
+        opts.querySelectorAll("button").forEach((x, k) => { x.disabled = true; if (k === q.poprawna) x.classList.add("ok"); });
+        stan[i] = j === q.poprawna;
+        if (!stan[i]) { b.classList.add("bad"); el.classList.add("wrong"); }
+        el.classList.add("answered");
+        show();
+      });
+      opts.appendChild(b);
+    });
+    return el;
+  }
+  function render(only) {
+    let first = null;
+    DANE.forEach((q, i) => {
+      if (only && stan[i] !== false) return;
+      stan[i] = null;
+      const el = question(i), old = box.children[i];
+      if (old) box.replaceChild(el, old); else box.appendChild(el);
+      first = first || el;
+    });
+    show();
+    return first;
+  }
+  popraw.addEventListener("click", () => { const el = render(true); if (el && el.scrollIntoView) el.scrollIntoView({behavior: "smooth", block: "start"}); });
+  document.getElementById("reset").addEventListener("click", () => { box.innerHTML = ""; render(false); window.scrollTo(0, 0); });
+  try { const t = localStorage.getItem("cppkurs-theme"); if (t) root.dataset.theme = t; } catch (e) {}
+  document.getElementById("theme").addEventListener("click", () => {
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
+  });
+  function start(lista) { DANE = lista; stan = DANE.map(() => null); box.innerHTML = ""; render(false); }
+  if (LOS) {
+    // powtórka: losowy zestaw pytań z zaznaczonych zagadnień
+    const panel = document.getElementById("los"), lista = panel.querySelector(".tematy"), ile = document.getElementById("ile");
+    [...new Set(WSZYSTKIE.map(q => q.temat))].forEach(t => {
+      const l = document.createElement("label");
+      l.innerHTML = "<input type=\"checkbox\" checked><span>" + esc(t) + " <span class=\"meta\">(" + WSZYSTKIE.filter(q => q.temat === t).length + ")</span></span>";
+      l.querySelector("input").value = t;
+      lista.appendChild(l);
+    });
+    LOS.liczby.filter(n => n < WSZYSTKIE.length).concat([0]).forEach(n => {
+      const o = document.createElement("option");
+      o.value = n;
+      o.textContent = n ? n : "wszystkie (" + WSZYSTKIE.length + ")";
+      ile.appendChild(o);
+    });
+    ile.value = WSZYSTKIE.length > LOS.domyslnie ? LOS.domyslnie : 0;
+    const losuj = () => {
+      const wybrane = new Set([...lista.querySelectorAll("input:checked")].map(x => x.value));
+      const pula = WSZYSTKIE.filter(q => wybrane.has(q.temat));
+      for (let i = pula.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pula[i], pula[j]] = [pula[j], pula[i]]; }
+      start(pula.slice(0, Number(ile.value) || pula.length));
+    };
+    document.getElementById("losuj").addEventListener("click", losuj);
+    panel.hidden = false;
+    losuj();
+  } else start(WSZYSTKIE);
+})();
+</script>
+</body>
+</html>

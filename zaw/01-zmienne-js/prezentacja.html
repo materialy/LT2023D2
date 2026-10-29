@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Zmienne w JavaScript: let, const i template literals</title>
+<style>
+
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --sans:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  --hand:"Caveat", "Comic Sans MS", cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;color:var(--ink);font-family:var(--sans);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+/* czerwony margines zeszytu */
+body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(18px,5vw,64px);width:2px;background:var(--margin);opacity:.7;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.deck{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0 0 72px 0;overflow-y:auto;
+  padding:clamp(20px,5vh,56px) clamp(20px,5vw,72px) 24px calc(clamp(18px,5vw,64px) + clamp(20px,4vw,48px));
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .35s ease, transform .35s ease, visibility 0s .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease, transform .35s ease}
+.slide.before{transform:translateX(-24px)}
+.inner{max-width:1080px}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,5.2rem)}
+h2{font-size:clamp(1.8rem,4.2vw,3rem)}
+p,li{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.55;max-width:68ch}
+.lead{font-size:clamp(1.1rem,2vw,1.45rem);color:var(--ink-soft)}
+.note{font-family:var(--hand);font-size:clamp(1.4rem,2.4vw,1.9rem);color:var(--margin);line-height:1.15;transform:rotate(-1.5deg);display:inline-block}
+mark{background:linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 90%, transparent 90%);color:inherit;padding:0 .1em}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.k{color:#7A3FC2}.s{color:#1F8A5B}.n{color:#C2372F}.p{color:#2563C9}.c{color:var(--ink-soft);font-style:italic}
+:root[data-theme="dark"] .k{color:#C29BFF} :root[data-theme="dark"] .s{color:#6FD8A2} :root[data-theme="dark"] .n{color:#FF8E86} :root[data-theme="dark"] .p{color:#7FB0FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .k{color:#C29BFF}:root:not([data-theme="light"]) .s{color:#6FD8A2}:root:not([data-theme="light"]) .n{color:#FF8E86}:root:not([data-theme="light"]) .p{color:#7FB0FF}}
+
+/* tytuł */
+.title-code{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.5rem);background:var(--code-bg);border:2px solid var(--ink);padding:.9em 1.1em;display:inline-block;margin:1.2em 0;box-shadow:6px 6px 0 var(--ink)}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--ink);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.meta{color:var(--ink-soft);font-size:1rem}
+.meta a{color:inherit}
+
+/* agenda */
+.agenda{list-style:none;padding:0;margin:0;display:grid;gap:2px;max-width:760px}
+.agenda li{max-width:none}
+.agenda button{width:100%;display:grid;grid-template-columns:5.5em 1fr;gap:1em;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);padding:.6em .2em;font-size:clamp(1rem,1.6vw,1.15rem)}
+.agenda button:hover{background:var(--code-bg)}
+.agenda .t{font-family:var(--mono);color:var(--margin)}
+
+/* dwie kolumny */
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* drzewo plików */
+.tree{font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem);background:var(--panel);border:2px solid var(--ink);padding:1em;box-shadow:6px 6px 0 var(--ink)}
+.tree button{display:block;width:100%;text-align:left;background:none;border:0;padding:.35em .5em;border-radius:3px;font-family:var(--mono);font-size:inherit}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-pressed="true"]{background:var(--marker);color:#1D2A5C}
+.tree .dir{padding:.35em .5em;color:var(--ink-soft)}
+.tree .ind1{padding-left:1.6em}.tree .ind2{padding-left:3.2em}
+.explain{border-left:4px solid var(--margin);padding:.4em 0 .4em 1em;min-height:9em}
+.explain h3{margin:0 0 .3em;font-size:1.4rem;font-family:var(--mono)}
+.tag{display:inline-block;font-size:.85rem;border:1.5px solid currentColor;padding:.05em .55em;border-radius:99px;margin-bottom:.6em}
+
+/* kod klikalny */
+.codebox{background:var(--code-bg);border:2px solid var(--ink);font-family:var(--mono);font-size:clamp(.85rem,1.45vw,1.05rem);overflow-x:auto;box-shadow:6px 6px 0 var(--ink)}
+.codebox .ln{display:flex;width:100%;background:none;border:0;text-align:left;padding:.28em .8em;font-family:var(--mono);font-size:inherit;white-space:pre}
+.codebox .ln::before{content:attr(data-n);width:2em;flex:none;color:var(--ink-soft);opacity:.6}
+.codebox button.ln:hover{background:var(--grid)}
+.codebox .ln.on{background:var(--marker);color:#1D2A5C}
+.codebox .ln.on span{color:#1D2A5C}
+.codebox div.ln{cursor:default}
+
+/* strumienie */
+.streams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;margin:1.5em 0;max-width:820px}
+.box{border:2px solid var(--ink);background:var(--panel);padding:1em;text-align:center;font-weight:600;min-height:5.5em;display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.box small{font-weight:400;color:var(--ink-soft)}
+.arrow{font-family:var(--mono);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:600;text-align:center;color:var(--margin);min-width:3.5em;position:relative}
+.packet{position:absolute;top:-1.2em;left:50%;font-size:.9rem;background:var(--marker);color:#1D2A5C;padding:.1em .5em;transform:translateX(-50%);white-space:nowrap;opacity:0}
+.packet.go-right{animation:goR 1.1s ease forwards}
+.packet.go-left{animation:goL 1.1s ease forwards}
+@keyframes goR{0%{opacity:0;transform:translateX(-160%)}20%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes goL{0%{opacity:0;transform:translateX(60%)}20%{opacity:1}100%{opacity:0;transform:translateX(-160%)}}
+.seg{display:inline-flex;border:2px solid var(--ink);margin-bottom:.5em}
+.seg button{background:transparent;border:0;padding:.5em 1em;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* RAM */
+.ram{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;max-width:560px;margin:1em 0}
+.cell{border:1.5px solid var(--line);background:var(--panel);aspect-ratio:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);transition:background .3s,border-color .3s}
+.cell b{font-size:1.25rem;color:var(--ink)}
+.cell.used{border:2px solid var(--margin);background:var(--code-bg)}
+.cell.used .nm{color:var(--margin);font-weight:600}
+.btn{border:2px solid var(--ink);background:var(--panel);padding:.55em 1.1em;font-weight:600;box-shadow:3px 3px 0 var(--ink);transition:transform .1s, box-shadow .1s}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.6em 0}
+input[type=number],input[type=text]{font-family:var(--mono);font-size:1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em .6em;width:7em}
+.log{font-family:var(--mono);font-size:.95rem;min-height:1.5em;color:var(--ink-soft)}
+
+/* dzielenie */
+.divrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1em;margin-top:1em;max-width:560px}
+.res{border:2px dashed var(--line);padding:.8em;font-family:var(--mono)}
+.res .big{font-size:1.8rem;font-weight:600;color:var(--ink)}
+
+/* przypisanie stepper */
+.assign{font-family:var(--mono);font-size:clamp(1rem,1.8vw,1.25rem)}
+.assign .st{padding:.35em .6em;border-left:4px solid transparent}
+.assign .st.on{border-left-color:var(--margin);background:var(--code-bg)}
+.xbox{display:inline-flex;flex-direction:column;align-items:center;border:2px solid var(--margin);padding:.6em 1.4em;font-family:var(--mono);margin-top:1em}
+.xbox b{font-size:2.4rem}
+
+/* plan programu */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:960px;margin:1.5em 0;counter-reset:f}
+@media (max-width:700px){.flow{grid-template-columns:1fr}}
+.flow > div{border:2px solid var(--ink);margin:-1px;padding:1.2em;background:var(--panel);position:relative}
+.flow h3{margin:0 0 .3em;font-size:1.3rem}
+.flow h3::before{counter-increment:f;content:counter(f) ". ";color:var(--margin)}
+.flow code{display:block;margin-top:.6em;background:var(--code-bg);padding:.4em .6em}
+
+/* konsola */
+.console{background:#0E1430;color:#D8E0FF;font-family:var(--mono);font-size:clamp(.85rem,1.4vw,1rem);padding:1em;min-height:12em;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);white-space:pre-wrap;word-break:break-word}
+.console .bar{display:flex;gap:6px;margin:-.4em 0 .8em}
+.console .bar i{width:10px;height:10px;border-radius:50%;background:#3A4570;display:block}
+.console input{background:transparent;border:0;border-bottom:1px solid #D8E0FF;color:#FFE45C;font-family:var(--mono);font-size:inherit;width:6em;padding:0}
+.console .ret{color:#7FA0E0}
+
+/* quiz */
+.quiz{max-width:760px}
+.qnum{font-family:var(--mono);color:var(--margin)}
+.opts{display:grid;gap:.5em;margin:1em 0}
+.opts button{text-align:left;border:2px solid var(--ink);background:var(--panel);padding:.75em 1em;font-size:clamp(1rem,1.5vw,1.1rem)}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button.right{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opts button:disabled{cursor:default}
+.fb{min-height:3em}
+
+/* podsumowanie */
+.check{list-style:none;padding:0;columns:2 280px;column-gap:2.5em;max-width:900px}
+.check li{break-inside:avoid;padding:.35em 0 .35em 1.8em;position:relative;max-width:none}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.links a{color:var(--ink);font-weight:600}
+
+/* nawigacja */
+nav.ctl{position:fixed;left:0;right:0;bottom:0;z-index:5;height:calc(72px + env(safe-area-inset-bottom,0px));padding:0 clamp(12px,3vw,32px) env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(6px);border-top:2px solid var(--ink)}
+.dots{flex:1;display:flex;gap:4px;align-items:center;overflow-x:auto;padding:6px 2px}
+.dots button{flex:1;min-width:14px;height:8px;border:0;background:var(--line);padding:0}
+.dots button.done{background:var(--ink-soft)}
+.dots button.cur{background:var(--margin);height:12px}
+.navbtn{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);font-size:1.2rem;font-weight:800;display:grid;place-items:center}
+.count{font-family:var(--mono);font-size:.9rem;min-width:4.2em;text-align:center}
+.theme{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.flowc{display:grid;gap:12px;max-width:540px;justify-items:center;margin:1em 0}
+.dec{border:2px solid var(--ink);background:var(--panel);padding:.8em 1.4em;font-family:var(--mono);font-weight:600;border-radius:40px}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.br{border:2px solid var(--line);padding:.8em;text-align:center;background:var(--panel);transition:background .3s,border-color .3s}
+.br b{display:block;font-family:var(--mono);color:var(--margin)}
+.br.on{border-color:var(--margin);background:var(--marker);color:#1D2A5C}
+.br.on b{color:#1D2A5C}
+.tbl{border-collapse:collapse;font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem)}
+.tbl td,.tbl th{border:1.5px solid var(--line);padding:.45em .9em;text-align:left;background:var(--panel)}
+.tbl th{font-family:var(--sans)}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-weight:600;color:#fff;font-family:var(--mono)}
+.chip.t{background:var(--ok)}.chip.f{background:var(--bad)}
+.tog{display:inline-flex;align-items:center;gap:.5em;border:2px solid var(--ink);background:var(--panel);padding:.45em .9em;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.tog[aria-pressed="false"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;max-width:560px;border-bottom:2px solid var(--ink);margin:2em 0 .3em}
+.bars div{flex:1;background:var(--ink);position:relative;transition:height .4s;min-height:2px}
+.bars div span{position:absolute;top:-1.5em;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.blabels{display:flex;gap:10px;max-width:560px;font-family:var(--mono)}
+.blabels span{flex:1;text-align:center}
+.out{font-family:var(--mono);background:#0E1430;color:#D8E0FF;padding:.8em 1em;border:2px solid var(--ink);white-space:pre-wrap;word-break:break-word;min-height:3em;max-height:14em;overflow:auto;font-size:clamp(.85rem,1.4vw,1rem)}
+.out .warn{color:#FF8E86}
+select{font:inherit;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.4em}
+input[type=range]{width:100%;max-width:420px;accent-color:var(--margin)}
+.part{background:none;border:0;border-bottom:3px solid var(--margin);font-family:var(--mono);font-size:inherit;padding:0 .15em;color:inherit;cursor:pointer}
+.part:hover{background:var(--grid)}
+.part.on{background:var(--marker);color:#1D2A5C}
+.part.on span{color:#1D2A5C}
+.big-num{font-family:var(--mono);font-size:clamp(2rem,6vw,4rem);font-weight:600;letter-spacing:-.02em}
+.trace{max-height:16em;overflow:auto}
+.trace .tbl td{padding:.3em .7em}
+.trace tr.now td{background:var(--marker);color:#1D2A5C}
+.pane h3{margin:.2em 0 .5em}
+label.inl{display:inline-flex;align-items:center;gap:.4em}
+
+/* ===== Układ pełnoekranowy (rzutnik, tablica) ===== */
+.inner{max-width:min(1800px,100%)}
+.lead{max-width:95ch}
+.two{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,3vw,60px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+/* elementy, które miały sztywną maks. szerokość, rozciągają się na całą kolumnę */
+.inner [style*="max-width"]{max-width:none!important}
+.ram,.bars,.blabels,.check,.flow,.divrow,.streams{max-width:none}
+.agenda,.quiz{max-width:1200px}
+/* linie kodu: zawijanie zamiast przewijania, numer linii w stałej kolumnie, zachowane spacje */
+.codebox{overflow-x:visible}
+.codebox .ln{display:block;position:relative;width:100%;padding:.28em .8em .28em 3em;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.codebox .ln::before{position:absolute;left:.8em;top:.28em;width:2em}
+/* większe pismo na dużych ekranach */
+@media (min-width:1400px){html{font-size:17px}}
+@media (min-width:1750px){html{font-size:19px}}
+@media (min-width:2300px){html{font-size:23px}}
+@media (min-width:1400px){
+  p,li{font-size:clamp(1rem,1.15vw,1.3rem);max-width:80ch}
+  .codebox{font-size:clamp(.9rem,1.05vw,1.2rem)}
+  .out,.console,.tbl{font-size:clamp(.9rem,.95vw,1.1rem)}
+}
+/* nagłówki skalowane także do wysokości ekranu (niskie rzutniki 720p) */
+h1{font-size:clamp(2.2rem,min(7vw,11vh),5.2rem)}
+h2{font-size:clamp(1.6rem,min(4.2vw,6.5vh),3rem)}
+@media (max-height:800px){
+  .slide{padding-top:clamp(14px,3vh,28px)}
+  h1,h2{margin-bottom:.35em}
+  p,li{line-height:1.45}
+  .row{margin:.4em 0}
+  .title-code{margin:.7em 0}
+  .codebox .ln{padding-top:.2em;padding-bottom:.2em}
+  .codebox .ln::before{top:.2em}
+}
+@media (max-height:800px){.check li{padding:.2em 0 .2em 1.8em}}
+
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+<section class="slide" data-title="Start"><div class="inner">
+  <p class="note">Zaawansowane Aplikacje Webowe · powtórka JavaScript</p>
+  <h1>Zmienne<br>w JavaScript</h1>
+  <div class="title-code"><span class="k">const</span> imie = <span class="s">"Filemon"</span>; console.log(<span class="s">`Cześć, ${imie}!`</span>);<span class="cursor"></span></div>
+  <p class="lead">let i const, nazwy zmiennych, szablony tekstowe i dane od użytkownika — wszystko, czego potrzeba w pierwszym skrypcie.</p>
+  <div class="row"><button class="btn primary" id="startRun">Uruchom ten kod</button><div class="out" id="startOut" style="flex:1"></div></div>
+  <p class="meta">Sterowanie: strzałki ← →, spacja lub przyciski na dole.</p>
+</div></section>
+
+<section class="slide" data-title="Plan"><div class="inner">
+  <h2>Co powtórzymy</h2>
+  <p class="lead">Kliknij temat, aby do niego przejść.</p>
+  <ul class="agenda">
+   <li><button data-go="2"><span class="t">&lt;script&gt;</span>Jak strona uruchamia skrypt</button></li>
+   <li><button data-go="3"><span class="t">let const</span>Zmienna a stała, krok po kroku</button></li>
+   <li><button data-go="4"><span class="t">nazwy</span>Jakie nazwy są poprawne</button></li>
+   <li><button data-go="5"><span class="t">`${}`</span>Template literals</button></li>
+   <li><button data-go="6"><span class="t">prompt</span>Dane od użytkownika to tekst</button></li>
+   <li><button data-go="7"><span class="t">bugi</span>Znajdź 3 błędy</button></li>
+   <li><button data-go="8"><span class="t">?</span>Quiz</button></li>
+  </ul>
+</div></section>
+
+<section class="slide" data-title="Skrypt"><div class="inner">
+  <h2>Jak strona uruchamia skrypt</h2>
+  <p class="lead">Strona z lekcji jest pusta: tylko wczytuje <code>index.js</code>. Kliknij linijkę, żeby zobaczyć, po co jest.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kHtml">
+     <button class="ln" data-n="1" data-ex="doc">&lt;!DOCTYPE html&gt;</button>
+     <button class="ln" data-n="2" data-ex="lang">&lt;html lang=<span class="s">"pl"</span>&gt;</button>
+     <div class="ln" data-n="3">&lt;head&gt;</div>
+     <button class="ln" data-n="4" data-ex="meta">    &lt;meta charset=<span class="s">"UTF-8"</span>&gt;</button>
+     <div class="ln" data-n="5">    &lt;title&gt;Powtórka JS&lt;/title&gt;</div>
+     <div class="ln" data-n="6">&lt;/head&gt;</div>
+     <button class="ln" data-n="7" data-ex="body">&lt;body&gt;</button>
+     <button class="ln" data-n="8" data-ex="script">    &lt;script src=<span class="s" id="srcV">"index.js"</span>&gt;&lt;/script&gt;</button>
+     <div class="ln" data-n="9">&lt;/body&gt;</div>
+     <div class="ln" data-n="10">&lt;/html&gt;</div>
+    </div>
+    <p class="meta">W folderze leżą dwa pliki: <code>index.html</code> i <code>index.js</code>.</p>
+    <div class="row"><label class="inl">Wpisz wartość src: <input id="srcIn" value="index.js"></label></div>
+   </div>
+   <div>
+    <div class="explain" id="kHtmlEx"><p class="note">← kliknij linijkę kodu</p></div>
+    <p class="meta">Konsola (F12):</p>
+    <div class="out" id="conHtml"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="let / const"><div class="inner">
+  <h2>let może się zmienić, const nie</h2>
+  <p class="lead">Wykonaj program linijka po linijce i patrz na tabelę zmiennych.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kLet">
+     <div class="ln" data-n="1"><span class="k">let</span> punkty = <span class="n">0</span>;</div>
+     <div class="ln" data-n="2"><span class="k">const</span> limit = <span class="n">3</span>;</div>
+     <div class="ln" data-n="3">punkty = punkty + <span class="n">10</span>;</div>
+     <div class="ln" data-n="4">punkty = punkty + <span class="n">5</span>;</div>
+     <div class="ln" data-n="5">limit = <span class="n">5</span>;</div>
+     <div class="ln" data-n="6">console.log(punkty);</div>
+    </div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="letNext">Następny krok</button><button class="btn" id="letReset">Od nowa</button></div>
+   </div>
+   <div>
+    <table class="tbl" style="width:100%">
+     <tr><th>zmienna</th><th>wartość</th></tr>
+     <tr><td>punkty <span class="meta">(let)</span></td><td id="vPunkty">—</td></tr>
+     <tr><td>limit <span class="meta">(const)</span></td><td id="vLimit">—</td></tr>
+    </table>
+    <p id="letOpis"></p>
+    <div class="out" id="letOut"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Nazwy"><div class="inner">
+  <h2>Czy ta nazwa zmiennej jest poprawna?</h2>
+  <div class="two">
+   <div>
+    <p>Wpisz nazwę, a sprawdzę ją tak jak JavaScript.</p>
+    <div class="row"><label class="inl"><span class="mono">let</span> <input id="nazwaIn" value="cenaBiletu"> <span class="mono">= 12;</span></label></div>
+    <div class="out" id="nazwaOut"></div>
+    <p class="meta">Zasady: litery, cyfry, _ i $; nie od cyfry; bez spacji i myślnika; nie słowo kluczowe. Wielkość liter ma znaczenie.</p>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Oceń sam: poprawna czy błędna?</h3>
+    <table class="tbl" style="width:100%" id="nazwyTbl"></table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="nazwySpr">Sprawdź</button></div>
+    <p id="nazwyWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Szablony"><div class="inner">
+  <h2>Template literals: tekst z wstawkami</h2>
+  <p class="lead">Backtick <code>`</code> (klawisz pod Esc) i <code>${…}</code> wstawiają wartość wprost do tekstu. Zmień dane i porównaj wyniki.</p>
+  <div class="two">
+   <div>
+    <div class="row"><label class="inl">imie = <input id="tImie" value="Filemon"></label><label class="inl">wiek = <input type="number" id="tWiek" value="3"></label></div>
+    <div class="codebox" id="kTpl">
+     <div class="ln" data-n="1">console.log(<span class="s">"Kot "</span> + imie + <span class="s">" ma "</span> + wiek + <span class="s">" lata."</span>);</div>
+     <div class="ln" data-n="2">console.log(<span class="s">`Kot ${imie} ma ${wiek} lata.`</span>);</div>
+     <div class="ln" data-n="3">console.log(<span class="s">`Za rok: ${wiek + 1}`</span>);</div>
+     <div class="ln" data-n="4">console.log(<span class="s">'Kot ${imie}'</span>);</div>
+    </div>
+    <div class="out" id="tplOut"></div>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Przewidź wynik</h3>
+    <div class="codebox">
+     <div class="ln"><span class="k">const</span> a = <span class="n">2</span>;</div>
+     <div class="ln">console.log(<span class="s">`${a} + ${a} = ${a + a}`</span>);</div>
+    </div>
+    <div class="row"><label class="inl">Konsola pokaże: <input id="tplPred" placeholder="wpisz wynik"></label><button class="btn primary" id="tplSpr">Sprawdź</button></div>
+    <p id="tplWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="prompt"><div class="inner">
+  <h2>prompt zawsze daje tekst</h2>
+  <p class="lead"><code>prompt</code> zwraca to, co wpisał użytkownik, jako <mark>string</mark>. Po „Anuluj” zwraca <code>null</code>.</p>
+  <div class="two">
+   <div>
+    <div class="row"><label class="inl">Użytkownik wpisuje: <input id="pIn" value="17"></label><button class="btn" id="pAnuluj">Kliknij „Anuluj”</button></div>
+    <div class="codebox">
+     <div class="ln"><span class="k">const</span> odp = prompt(<span class="s">"Ile masz lat?"</span>);</div>
+     <div class="ln">console.log(<span class="k">typeof</span> odp);</div>
+     <div class="ln">console.log(odp + <span class="n">1</span>);</div>
+     <div class="ln">console.log(Number(odp) + <span class="n">1</span>);</div>
+    </div>
+    <div class="out" id="pOut"></div>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Co trafi do konsoli?</h3>
+    <p>Użytkownik wpisał <b>4</b>. Program wykonuje <code>console.log(odp * 3)</code>.</p>
+    <div class="row"><label class="inl">Wynik: <input id="pPred" placeholder="wpisz"></label><button class="btn primary" id="pSpr">Sprawdź</button></div>
+    <p id="pWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Znajdź błędy"><div class="inner">
+  <h2>Znajdź 3 błędy</h2>
+  <p class="lead">Kliknij linijki z błędem, potem „Sprawdź”.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kBug">
+     <button class="ln" data-n="1"><span class="k">const</span> sklep = <span class="s">"Sklep Pod Lipą"</span>;</button>
+     <button class="ln" data-n="2"><span class="k">const</span> cena = <span class="n">2.5</span>;</button>
+     <button class="ln" data-n="3"><span class="k">let</span> 1ilosc = <span class="n">4</span>;</button>
+     <button class="ln" data-n="4"><span class="k">const</span> suma = <span class="n">0</span>;</button>
+     <button class="ln" data-n="5">suma = cena * <span class="n">4</span>;</button>
+     <button class="ln" data-n="6">console.log(<span class="s">'Razem: ${suma} zł'</span>);</button>
+     <button class="ln" data-n="7">console.log(<span class="s">`Sklep: ${sklep}`</span>);</button>
+    </div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="bugSpr">Sprawdź</button><button class="btn" id="bugReset">Od nowa</button></div>
+   </div>
+   <div class="explain" id="bugEx"><p class="note">← zaznacz 3 linijki</p></div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Quiz"><div class="inner quiz" id="quiz"></div></section>
+
+<section class="slide" data-title="Podsumowanie"><div class="inner">
+  <h2>Do zapamiętania</h2>
+  <ul class="check">
+   <li><code>&lt;script src="index.js"&gt;&lt;/script&gt;</code> przed <code>&lt;/body&gt;</code> podłącza plik JS.</li>
+   <li><code>console.log</code> pisze do konsoli (F12), tam widać też błędy.</li>
+   <li><code>const</code> to wybór domyślny; <code>let</code>, gdy wartość ma się zmieniać.</li>
+   <li>Przypisanie do <code>const</code> kończy się błędem TypeError.</li>
+   <li>Nazwy: nie od cyfry, bez spacji i myślnika, nie słowo kluczowe; piszemy camelCase.</li>
+   <li><code>`Tekst ${wyrazenie}`</code> wstawia wartość do tekstu; w apostrofach to nie działa.</li>
+   <li><code>prompt</code> zwraca tekst albo <code>null</code>; liczbę daje <code>Number()</code>.</li>
+   <li><code>"5" + 1</code> to <code>"51"</code>, a <code>"5" * 1</code> to <code>5</code>.</li>
+  </ul>
+  <p class="links">Dokumentacja: <a href="https://developer.mozilla.org/pl/docs/Learn/JavaScript/First_steps/Variables" target="_blank" rel="noopener">MDN: zmienne</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals" target="_blank" rel="noopener">MDN: template literals</a> · <a href="https://developer.mozilla.org/pl/docs/Web/API/Window/prompt" target="_blank" rel="noopener">MDN: prompt</a></p>
+  <p class="note">Dalej: instrukcja warunkowa if</p>
+</div></section>
+
+</main>
+<nav class="ctl" aria-label="Nawigacja prezentacji">
+ <button class="navbtn" id="prev" aria-label="Poprzedni slajd">‹</button>
+ <div class="dots" id="dots"></div>
+ <span class="count" id="count"></span>
+ <button class="navbtn" id="next" aria-label="Następny slajd">›</button>
+ <button class="theme" id="theme" aria-label="Zmień motyw jasny/ciemny">◐</button>
+</nav>
+
+<script>
+(function(){
+const KEY='zaw-zmienne-js';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const slides=[...document.querySelectorAll('.slide')];
+const dots=$('dots'),count=$('count');
+let cur=0;
+slides.forEach((s,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'. '+s.dataset.title);b.title=s.dataset.title;b.onclick=()=>go(i);dots.appendChild(b)});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i)});
+  [...dots.children].forEach((d,k)=>{d.className=k===i?'cur':(k<i?'done':'')});
+  count.textContent=(i+1)+' / '+slides.length;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem(KEY+'-slide',i)}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!e.target.matches('button'))){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>70&&!e.target.closest('.codebox,.console,.out,input,.bars'))go(cur+(dx<0?1:-1));tx=null},{passive:true});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+const root=document.documentElement;
+$('theme').onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('cppkurs-theme',root.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem('cppkurs-theme');if(t)root.dataset.theme=t}catch(e){}
+
+function bindExplain(boxId,outId,map){
+  const box=$(boxId),out=$(outId);
+  box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('[data-ex]').forEach(x=>x.classList.remove('on'));
+    box.querySelectorAll('[data-ex="'+b.dataset.ex+'"]').forEach(x=>x.classList.add('on'));
+    const e=map[b.dataset.ex];out.innerHTML='<h3>'+e[0]+'</h3><p>'+e[1]+'</p>';
+  });
+}
+function hlLines(boxId,set){$(boxId).querySelectorAll('.ln').forEach(l=>l.classList.toggle('on',set.includes(+l.dataset.n)))}
+function makeQuiz(el,Q){
+  let qi=0,score=0;
+  function show(){
+    if(qi>=Q.length){
+      el.innerHTML='<h2>Wynik: '+score+' / '+Q.length+'</h2><p class="lead">'+(score===Q.length?'Komplet! Możesz śmiało ruszać do kolejnego odcinka.':score>=Q.length-2?'Bardzo dobrze. Przejrzyj jeszcze slajdy z pytań, w których był błąd.':'Warto wrócić do wcześniejszych slajdów, a potem spróbować ponownie.')+'</p><div class="row"><button class="btn primary" id="qAgain">Spróbuj ponownie</button></div>';
+      $('qAgain').onclick=()=>{qi=0;score=0;show()};return;
+    }
+    const q=Q[qi];
+    el.innerHTML='<p class="qnum">Pytanie '+(qi+1)+' z '+Q.length+'</p><h2>'+esc(q[0])+'</h2>'+(q[4]?'<div class="codebox" style="max-width:640px;margin-bottom:.5em">'+q[4].split('\n').map((l,k)=>'<div class="ln" data-n="'+(k+1)+'">'+esc(l)+'</div>').join('')+'</div>':'')+'<div class="opts"></div><p class="fb" aria-live="polite"></p><div class="row"><button class="btn primary" id="qNext" hidden>'+(qi===Q.length-1?'Pokaż wynik':'Następne pytanie')+'</button></div>';
+    const o=el.querySelector('.opts'),fb=el.querySelector('.fb'),nx=$('qNext');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+      b.onclick=()=>{[...o.children].forEach((x,k)=>{x.disabled=true;if(k===q[2])x.classList.add('right')});
+        if(i===q[2]){score++;fb.innerHTML='<b>Dobrze!</b> '+q[3]}else{b.classList.add('wrong');fb.innerHTML='<b>Nie tym razem.</b> '+q[3]}
+        nx.hidden=false;nx.focus()};o.appendChild(b)});
+    nx.onclick=()=>{qi++;show()};
+  }
+  show();
+}
+
+// pomocnicze
+const ok=t=>'<span class="chip t">✓</span> '+t, zle=t=>'<span class="chip f">✗</span> '+t;
+const konsola=wiersze=>wiersze.map(w=>'&gt; '+w).join('\n');
+function bugHunt(boxId,sprId,resetId,outId,grupy,opisy){
+  const lns=[...$(boxId).querySelectorAll('.ln')],bledne=new Set(grupy.flat());
+  lns.forEach(l=>l.onclick=()=>l.classList.toggle('on'));
+  $(sprId).onclick=()=>{
+    const sel=lns.filter(l=>l.classList.contains('on')).map(l=>+l.dataset.n);
+    let traf=0;
+    const lista=grupy.map((g,i)=>{const t=g.some(n=>sel.includes(n));if(t)traf++;
+      return '<li>'+(t?ok(''):'<span class="chip f">pominięty</span> ')+opisy[i]+'</li>';});
+    const obok=sel.filter(n=>!bledne.has(n));
+    lns.forEach(l=>{const n=+l.dataset.n;
+      l.style.background=bledne.has(n)?(sel.includes(n)?'rgba(46,160,90,.22)':'rgba(240,170,0,.28)'):(sel.includes(n)?'rgba(220,60,60,.22)':'');});
+    $(outId).innerHTML='<h3>Znalezione: '+traf+' z '+grupy.length+'</h3>'+(obok.length?'<p>Linie bez błędu: '+obok.join(', ')+'</p>':'')+'<ul>'+lista.join('')+'</ul>';
+  };
+  $(resetId).onclick=()=>{lns.forEach(l=>{l.classList.remove('on');l.style.background='';});
+    $(outId).innerHTML='<p class="note">← zaznacz '+grupy.length+' linijki</p>';};
+}
+
+// start
+$('startRun').onclick=()=>{$('startOut').textContent='> Cześć, Filemon!';};
+
+// skrypt na stronie
+bindExplain('kHtml','kHtmlEx',{
+  doc:['&lt;!DOCTYPE html&gt;','Informuje przeglądarkę, że to dokument HTML5.'],
+  lang:['lang="pl"','Język treści strony. Pomaga czytnikom ekranu i tłumaczowi w przeglądarce.'],
+  meta:['charset="UTF-8"','Kodowanie znaków. Dzięki niemu polskie litery, np. w napisie „Połączono”, wyświetlają się poprawnie.'],
+  body:['&lt;body&gt;','Widoczna treść strony. W pliku z lekcji jest pusta: cały wynik trafia do konsoli.'],
+  script:['&lt;script src="index.js"&gt;','Wczytuje i uruchamia plik <code>index.js</code> z tego samego folderu. Stoi na końcu <code>body</code>, więc skrypt rusza, gdy strona jest już wczytana. Znacznik zawsze ma zamknięcie, nawet gdy w środku nic nie ma.']
+});
+function upSrc(){
+  const v=$('srcIn').value.trim();
+  $('srcV').textContent='"'+v+'"';
+  if(v==='index.js'||v==='./index.js') $('conHtml').innerHTML='&gt; Połączono';
+  else if(v.toLowerCase()==='index.js') $('conHtml').innerHTML='<span class="warn">Z dysku na Windows zadziała, ale na serwerze już nie: tam wielkość liter w nazwie pliku ma znaczenie.</span>';
+  else $('conHtml').innerHTML='<span class="warn">GET '+esc(v||'(puste src)')+' net::ERR_FILE_NOT_FOUND</span>\nNie ma takiego pliku, skrypt się nie wczytał.';
+}
+$('srcIn').oninput=upSrc;upSrc();
+
+// let / const krok po kroku
+const letKroki=[
+  {l:[1],p:'0',m:'—',o:'',d:'<code>let</code> tworzy zmienną <b>punkty</b> i wkłada do niej 0.'},
+  {l:[2],p:'0',m:'3',o:'',d:'<code>const</code> tworzy stałą <b>limit</b> = 3. Tej wartości nie można już podmienić.'},
+  {l:[3],p:'10',m:'3',o:'',d:'Najpierw liczy się prawa strona: 0 + 10. Wynik trafia do <b>punkty</b>.'},
+  {l:[4],p:'15',m:'3',o:'',d:'10 + 5 = 15. Zmienna z <code>let</code> może zmieniać wartość dowolnie często.'},
+  {l:[5],p:'15',m:'3',o:'<span class="warn">Uncaught TypeError: Assignment to constant variable.</span>',d:'<b>Błąd!</b> Do stałej nie można przypisać nowej wartości. Skrypt zatrzymuje się w tej linii, więc linia 6 już się nie wykona. Naprawa: w linii 2 napisz <code>let</code> albo usuń linię 5.'}
+];
+let lk=-1;
+function rysujLet(){
+  const s=lk<0?null:letKroki[lk];
+  hlLines('kLet',s?s.l:[]);
+  $('vPunkty').textContent=s?s.p:'—';$('vLimit').textContent=s?s.m:'—';
+  $('letOpis').innerHTML=s?s.d:'Kliknij „Następny krok”.';
+  $('letOut').innerHTML=s&&s.o?s.o:'(konsola pusta)';
+  $('letNext').disabled=lk>=letKroki.length-1;
+}
+$('letNext').onclick=()=>{lk++;rysujLet();};$('letReset').onclick=()=>{lk=-1;rysujLet();};rysujLet();
+
+// nazwy zmiennych
+const SLOWA=['break','case','catch','class','const','continue','debugger','default','delete','do','else','export','extends','false','finally','for','function','if','import','in','instanceof','let','new','null','return','super','switch','this','throw','true','try','typeof','var','void','while','with'];
+function ocenNazwe(t){
+  if(t==='') return [null,'Wpisz nazwę.'];
+  if(/\s/.test(t)) return [false,'Spacja kończy nazwę. Złącz słowa w camelCase, np. <code>cenaBiletu</code>.'];
+  if(/^[0-9]/.test(t)) return [false,'Nazwa nie może zaczynać się od cyfry.'];
+  if(t.includes('-')) return [false,'Myślnik to minus: JavaScript przeczyta to jako odejmowanie.'];
+  if(!/^[\p{L}_$][\p{L}\p{Nd}_$]*$/u.test(t)) return [false,'Niedozwolony znak. Wolno używać liter, cyfr, _ i $.'];
+  if(SLOWA.includes(t)) return [false,'<code>'+esc(t)+'</code> to słowo kluczowe JavaScript.'];
+  if(/[^\x00-\x7F]/.test(t)) return [true,'Poprawna, ale polskie litery w nazwach utrudniają pracę w zespole. Lepiej ich unikać.'];
+  if(t.includes('_')&&/[a-z]/.test(t)) return [true,'Poprawna. W JavaScript częściej piszemy camelCase, np. <code>cenaBiletu</code>.'];
+  if(/^[A-Z]/.test(t)) return [true,'Poprawna. Wielką literą zwykle zaczynamy nazwy klas; zmienne piszemy od małej.'];
+  return [true,'Poprawna nazwa zmiennej.'];
+}
+function upNazwa(){const [w,opis]=ocenNazwe($('nazwaIn').value.trim());
+  $('nazwaOut').innerHTML=w===null?opis:(w?ok('<b>poprawna</b>\n'):zle('<b>błąd składni</b>\n'))+opis;}
+$('nazwaIn').oninput=upNazwa;upNazwa();
+
+const nazwy=[['cenaBiletu',true,'camelCase, same litery'],['2miejsce',false,'zaczyna się od cyfry'],['wiek-pasazera',false,'myślnik to minus'],['_licznik',true,'podkreślnik na początku jest dozwolony'],['$cena',true,'dolar jest dozwolony'],['class',false,'słowo kluczowe']];
+const wybor=nazwy.map(()=>null);
+$('nazwyTbl').innerHTML='<tr><th>nazwa</th><th>twoja ocena</th><th>wynik</th></tr>'+nazwy.map((n,i)=>'<tr><td><code>'+esc(n[0])+'</code></td><td><div class="seg"><button data-i="'+i+'" data-v="1" aria-pressed="false">poprawna</button><button data-i="'+i+'" data-v="0" aria-pressed="false">błędna</button></div></td><td id="nzR'+i+'"></td></tr>').join('');
+$('nazwyTbl').querySelectorAll('button').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;wybor[i]=b.dataset.v==='1';
+  b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+$('nazwySpr').onclick=()=>{let pkt=0;
+  nazwy.forEach((n,i)=>{const r=$('nzR'+i);
+    if(wybor[i]===null){r.textContent='—';return;}
+    if(wybor[i]===n[1]){pkt++;r.innerHTML=ok(n[2]);} else r.innerHTML=zle(n[2]);});
+  $('nazwyWynik').innerHTML='Wynik: <b>'+pkt+' / '+nazwy.length+'</b>'+(pkt===nazwy.length?' — bez pomyłki!':'');};
+
+// template literals
+function upTpl(){
+  const imie=$('tImie').value,w=$('tWiek').value,wiek=w===''?0:Number(w);
+  $('tplOut').innerHTML=konsola([
+    esc('Kot '+imie+' ma '+wiek+' lata.'),
+    esc(`Kot ${imie} ma ${wiek} lata.`),
+    esc(`Za rok: ${wiek+1}`),
+    esc('Kot ${imie}')+'   <span class="warn">← apostrofy: brak wstawiania</span>'
+  ]);
+}
+['tImie','tWiek'].forEach(id=>$(id).oninput=upTpl);upTpl();
+$('tplSpr').onclick=()=>{
+  const v=$('tplPred').value.trim().replace(/^["'`]|["'`]$/g,'').replace(/\s+/g,'');
+  $('tplWynik').innerHTML=v==='2+2=4'
+    ?ok('Dobrze. Tekst poza wstawkami zostaje, <code>${a}</code> daje 2, a <code>${a + a}</code> liczy się do 4.')
+    :zle('Jeszcze nie. Każda wstawka <code>${…}</code> zamienia się na wartość: <code>${a}</code> → 2, <code>${a + a}</code> → 4. Konsola pokaże <code>2 + 2 = 4</code>.');
+};
+
+// prompt
+let anul=false;
+function upP(){
+  const odp=anul?null:$('pIn').value,r1=odp+1,r2=Number(odp)+1;
+  $('pOut').innerHTML=konsola([
+    typeof odp+(anul?'   <span class="warn">← dziwactwo JS: typeof null to "object"</span>':''),
+    esc(String(r1))+'   <span class="meta">('+(typeof r1==='string'?'tekst: sklejone "'+esc(odp)+'" + "1"':'null zamienione na 0')+')</span>',
+    String(r2)+(isNaN(r2)?'   <span class="warn">← to nie jest liczba</span>':'   <span class="meta">(liczba)</span>')
+  ]);
+}
+$('pIn').oninput=()=>{anul=false;upP();};$('pAnuluj').onclick=()=>{anul=true;upP();};upP();
+$('pSpr').onclick=()=>{const v=$('pPred').value.trim().replace(/^["'`]|["'`]$/g,'');
+  $('pWynik').innerHTML=v==='12'
+    ?ok('Dobrze, 12. Mnożenie nie działa na tekście, więc JavaScript sam zamienia "4" na liczbę 4. Uwaga: <code>+</code> z tekstem by skleił.')
+    :zle('To będzie <b>12</b>. Operator <code>*</code> zamienia tekst "4" na liczbę. Sklejanie zdarza się tylko przy <code>+</code>, np. <code>odp + 3</code> to "43".');};
+
+// znajdź błędy
+bugHunt('kBug','bugSpr','bugReset','bugEx',[[3],[4,5],[6]],[
+  'Linia 3: nazwa <code>1ilosc</code> zaczyna się od cyfry. Poprawnie: <code>ilosc</code>.',
+  'Linie 4–5: do stałej <code>suma</code> nie można przypisać nowej wartości. W linii 4 potrzebne <code>let</code>.',
+  'Linia 6: w apostrofach <code>${suma}</code> się nie wstawi. Potrzebne backticki: <code>`Razem: ${suma} zł`</code>.'
+]);
+
+// quiz
+makeQuiz($('quiz'),[
+  ['Którym słowem utworzysz zmienną, której nie można ponownie przypisać?',['let','var','const','static'],2,'Do const nie przypiszesz nowej wartości. let i var na to pozwalają.'],
+  ['Co wypisze ten kod?',['2 + 3 = 23','2 + 3 = ${2 + 3}','5 = 5','2 + 3 = 5'],3,'Tekst poza ${} zostaje bez zmian, a wyrażenie w ${} zostaje obliczone.','console.log(`2 + 3 = ${2 + 3}`);'],
+  ['Która nazwa zmiennej jest poprawna?',['2gracz','cenaBiletu','cena-biletu','let'],1,'Nazwa nie może zaczynać się od cyfry, mieć myślnika ani być słowem kluczowym.'],
+  ['Użytkownik wpisał 18. Co trafi do zmiennej odp?',['liczba 18','tekst "18"','true','undefined'],1,'prompt zawsze zwraca tekst (albo null po Anuluj).','const odp = prompt("Ile masz lat?");'],
+  ['Jaki jest wynik?',['6','NaN','"51"','błąd składni'],2,'Gdy jedna strona plusa jest tekstem, JavaScript skleja teksty.','"5" + 1'],
+  ['Co się stanie po wykonaniu tego kodu?',['x będzie równe 2','x zostanie 1, bez komunikatu','Błąd TypeError','x będzie równe 3'],2,'Przypisanie do stałej kończy się błędem: Assignment to constant variable.','const x = 1;\nx = 2;'],
+  ['Gdzie zobaczysz wynik console.log("Połączono")?',['Na stronie, na końcu body','W konsoli przeglądarki (F12)','W okienku alert','W pasku tytułu karty'],1,'console.log pisze do konsoli narzędzi deweloperskich, nie na stronę.']
+]);
+
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>0)start=h-1;else{try{const s=localStorage.getItem(KEY+'-slide');if(s)start=+s}catch(e){}}
+go(start);
+
+})();
+</script>
+<!-- materialy.py: poprawki nawigacji prezentacji (ankieta uczniów 10.2026), wklejane przed </body> po build.py skilla -->
+<style>
+.dots button,.dots button.done,.dots button.cur{height:28px;padding:10px 0;background-clip:content-box}
+.dots button.cur{padding:8px 0}
+.navbtn{width:52px;height:52px;font-size:1.5rem}
+textarea,input,code,pre,.codebox{font-variant-ligatures:none}
+.navhint{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);white-space:nowrap}
+.navhint[hidden]{display:none}
+@media (max-width:560px){.navhint{display:none}}
+.quiz .opts{counter-reset:opt}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
+.quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
+.quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
+@media (hover:none){.quiz .qnum::after{content:none}}
+</style>
+<script>
+(function () {
+  var next = document.getElementById("next"), prev = document.getElementById("prev"), nav = document.querySelector("nav.ctl");
+  if (!next || !prev || !nav) return;
+  var hint = document.createElement("span");
+  hint.className = "navhint";
+  hint.hidden = true;
+  hint.textContent = "Esc — wróć do slajdów";
+  nav.insertBefore(hint, document.getElementById("count"));
+  function field(t) { return !!t && (t.isContentEditable || (t.matches && t.matches("input,select,textarea"))); }
+  function stop(e) { e.stopPropagation(); }
+  // Klawisz w polu do pisania nie może dojść do nawigacji skilla (ona pomija tylko input/select, więc spacja
+  // w <textarea> przełączała slajd). Faza przechwytywania: Esc oddaje klawiaturę slajdom, PageDown/PageUp
+  // i Alt+strzałki przełączają z pola; resztę zatrzymuje jednorazowy słuchacz na samym polu — po obsłudze
+  // przez stronę, przed nawigacją na document.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (!field(t)) return;
+    if (e.key === "Escape") { e.preventDefault(); t.blur(); }
+    else if (e.key === "PageDown" || (e.altKey && e.key === "ArrowRight")) { e.preventDefault(); t.blur(); next.click(); }
+    else if (e.key === "PageUp" || (e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); t.blur(); prev.click(); }
+    else t.addEventListener("keydown", stop, {once: true});
+  }, true);
+  // Enter przełącza dalej, gdy fokus nie stoi na niczym klikalnym (przycisk, link, rozwijane) ani w polu.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (e.key === "Enter" && !e.defaultPrevented && !field(t) && !(t.closest && t.closest("button,a,summary,label,[tabindex]"))) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // Quiz skilla: cyfra wybiera odpowiedź na aktywnym slajdzie (Enter potem klika „Następne pytanie”, które ma fokus).
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !/^[1-9]$/.test(e.key) || field(e.target)) return;
+    var opts = document.querySelector(".slide.active .quiz .opts");
+    var b = opts && opts.querySelectorAll("button")[+e.key - 1];
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+  });
+  // Po wyborze z listy, pola wyboru albo suwaka (myszką) klawiatura wraca do slajdów.
+  document.addEventListener("change", function (e) {
+    if (e.target.matches("select,input[type=checkbox],input[type=radio]")) e.target.blur();
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (e.target.matches && e.target.matches("input[type=range]")) setTimeout(function () { e.target.blur(); }, 0);
+  });
+  document.addEventListener("focusin", function (e) {
+    hint.hidden = !(field(e.target) && !(e.target.matches && e.target.matches("input[type=range],input[type=checkbox],input[type=radio]")));
+  });
+  document.addEventListener("focusout", function () { hint.hidden = true; });
+})();
+</script>
+</body>
+</html>

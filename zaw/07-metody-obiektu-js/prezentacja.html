@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Metody obiektu w JavaScript: funkcje w obiekcie i this</title>
+<style>
+
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --sans:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  --hand:"Caveat", "Comic Sans MS", cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;color:var(--ink);font-family:var(--sans);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+/* czerwony margines zeszytu */
+body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(18px,5vw,64px);width:2px;background:var(--margin);opacity:.7;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.deck{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0 0 72px 0;overflow-y:auto;
+  padding:clamp(20px,5vh,56px) clamp(20px,5vw,72px) 24px calc(clamp(18px,5vw,64px) + clamp(20px,4vw,48px));
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .35s ease, transform .35s ease, visibility 0s .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease, transform .35s ease}
+.slide.before{transform:translateX(-24px)}
+.inner{max-width:1080px}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,5.2rem)}
+h2{font-size:clamp(1.8rem,4.2vw,3rem)}
+p,li{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.55;max-width:68ch}
+.lead{font-size:clamp(1.1rem,2vw,1.45rem);color:var(--ink-soft)}
+.note{font-family:var(--hand);font-size:clamp(1.4rem,2.4vw,1.9rem);color:var(--margin);line-height:1.15;transform:rotate(-1.5deg);display:inline-block}
+mark{background:linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 90%, transparent 90%);color:inherit;padding:0 .1em}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.k{color:#7A3FC2}.s{color:#1F8A5B}.n{color:#C2372F}.p{color:#2563C9}.c{color:var(--ink-soft);font-style:italic}
+:root[data-theme="dark"] .k{color:#C29BFF} :root[data-theme="dark"] .s{color:#6FD8A2} :root[data-theme="dark"] .n{color:#FF8E86} :root[data-theme="dark"] .p{color:#7FB0FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .k{color:#C29BFF}:root:not([data-theme="light"]) .s{color:#6FD8A2}:root:not([data-theme="light"]) .n{color:#FF8E86}:root:not([data-theme="light"]) .p{color:#7FB0FF}}
+
+/* tytuł */
+.title-code{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.5rem);background:var(--code-bg);border:2px solid var(--ink);padding:.9em 1.1em;display:inline-block;margin:1.2em 0;box-shadow:6px 6px 0 var(--ink)}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--ink);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.meta{color:var(--ink-soft);font-size:1rem}
+.meta a{color:inherit}
+
+/* agenda */
+.agenda{list-style:none;padding:0;margin:0;display:grid;gap:2px;max-width:760px}
+.agenda li{max-width:none}
+.agenda button{width:100%;display:grid;grid-template-columns:5.5em 1fr;gap:1em;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);padding:.6em .2em;font-size:clamp(1rem,1.6vw,1.15rem)}
+.agenda button:hover{background:var(--code-bg)}
+.agenda .t{font-family:var(--mono);color:var(--margin)}
+
+/* dwie kolumny */
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* drzewo plików */
+.tree{font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem);background:var(--panel);border:2px solid var(--ink);padding:1em;box-shadow:6px 6px 0 var(--ink)}
+.tree button{display:block;width:100%;text-align:left;background:none;border:0;padding:.35em .5em;border-radius:3px;font-family:var(--mono);font-size:inherit}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-pressed="true"]{background:var(--marker);color:#1D2A5C}
+.tree .dir{padding:.35em .5em;color:var(--ink-soft)}
+.tree .ind1{padding-left:1.6em}.tree .ind2{padding-left:3.2em}
+.explain{border-left:4px solid var(--margin);padding:.4em 0 .4em 1em;min-height:9em}
+.explain h3{margin:0 0 .3em;font-size:1.4rem;font-family:var(--mono)}
+.tag{display:inline-block;font-size:.85rem;border:1.5px solid currentColor;padding:.05em .55em;border-radius:99px;margin-bottom:.6em}
+
+/* kod klikalny */
+.codebox{background:var(--code-bg);border:2px solid var(--ink);font-family:var(--mono);font-size:clamp(.85rem,1.45vw,1.05rem);overflow-x:auto;box-shadow:6px 6px 0 var(--ink)}
+.codebox .ln{display:flex;width:100%;background:none;border:0;text-align:left;padding:.28em .8em;font-family:var(--mono);font-size:inherit;white-space:pre}
+.codebox .ln::before{content:attr(data-n);width:2em;flex:none;color:var(--ink-soft);opacity:.6}
+.codebox button.ln:hover{background:var(--grid)}
+.codebox .ln.on{background:var(--marker);color:#1D2A5C}
+.codebox .ln.on span{color:#1D2A5C}
+.codebox div.ln{cursor:default}
+
+/* strumienie */
+.streams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;margin:1.5em 0;max-width:820px}
+.box{border:2px solid var(--ink);background:var(--panel);padding:1em;text-align:center;font-weight:600;min-height:5.5em;display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.box small{font-weight:400;color:var(--ink-soft)}
+.arrow{font-family:var(--mono);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:600;text-align:center;color:var(--margin);min-width:3.5em;position:relative}
+.packet{position:absolute;top:-1.2em;left:50%;font-size:.9rem;background:var(--marker);color:#1D2A5C;padding:.1em .5em;transform:translateX(-50%);white-space:nowrap;opacity:0}
+.packet.go-right{animation:goR 1.1s ease forwards}
+.packet.go-left{animation:goL 1.1s ease forwards}
+@keyframes goR{0%{opacity:0;transform:translateX(-160%)}20%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes goL{0%{opacity:0;transform:translateX(60%)}20%{opacity:1}100%{opacity:0;transform:translateX(-160%)}}
+.seg{display:inline-flex;border:2px solid var(--ink);margin-bottom:.5em}
+.seg button{background:transparent;border:0;padding:.5em 1em;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* RAM */
+.ram{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;max-width:560px;margin:1em 0}
+.cell{border:1.5px solid var(--line);background:var(--panel);aspect-ratio:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);transition:background .3s,border-color .3s}
+.cell b{font-size:1.25rem;color:var(--ink)}
+.cell.used{border:2px solid var(--margin);background:var(--code-bg)}
+.cell.used .nm{color:var(--margin);font-weight:600}
+.btn{border:2px solid var(--ink);background:var(--panel);padding:.55em 1.1em;font-weight:600;box-shadow:3px 3px 0 var(--ink);transition:transform .1s, box-shadow .1s}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.6em 0}
+input[type=number],input[type=text]{font-family:var(--mono);font-size:1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em .6em;width:7em}
+.log{font-family:var(--mono);font-size:.95rem;min-height:1.5em;color:var(--ink-soft)}
+
+/* dzielenie */
+.divrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1em;margin-top:1em;max-width:560px}
+.res{border:2px dashed var(--line);padding:.8em;font-family:var(--mono)}
+.res .big{font-size:1.8rem;font-weight:600;color:var(--ink)}
+
+/* przypisanie stepper */
+.assign{font-family:var(--mono);font-size:clamp(1rem,1.8vw,1.25rem)}
+.assign .st{padding:.35em .6em;border-left:4px solid transparent}
+.assign .st.on{border-left-color:var(--margin);background:var(--code-bg)}
+.xbox{display:inline-flex;flex-direction:column;align-items:center;border:2px solid var(--margin);padding:.6em 1.4em;font-family:var(--mono);margin-top:1em}
+.xbox b{font-size:2.4rem}
+
+/* plan programu */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:960px;margin:1.5em 0;counter-reset:f}
+@media (max-width:700px){.flow{grid-template-columns:1fr}}
+.flow > div{border:2px solid var(--ink);margin:-1px;padding:1.2em;background:var(--panel);position:relative}
+.flow h3{margin:0 0 .3em;font-size:1.3rem}
+.flow h3::before{counter-increment:f;content:counter(f) ". ";color:var(--margin)}
+.flow code{display:block;margin-top:.6em;background:var(--code-bg);padding:.4em .6em}
+
+/* konsola */
+.console{background:#0E1430;color:#D8E0FF;font-family:var(--mono);font-size:clamp(.85rem,1.4vw,1rem);padding:1em;min-height:12em;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);white-space:pre-wrap;word-break:break-word}
+.console .bar{display:flex;gap:6px;margin:-.4em 0 .8em}
+.console .bar i{width:10px;height:10px;border-radius:50%;background:#3A4570;display:block}
+.console input{background:transparent;border:0;border-bottom:1px solid #D8E0FF;color:#FFE45C;font-family:var(--mono);font-size:inherit;width:6em;padding:0}
+.console .ret{color:#7FA0E0}
+
+/* quiz */
+.quiz{max-width:760px}
+.qnum{font-family:var(--mono);color:var(--margin)}
+.opts{display:grid;gap:.5em;margin:1em 0}
+.opts button{text-align:left;border:2px solid var(--ink);background:var(--panel);padding:.75em 1em;font-size:clamp(1rem,1.5vw,1.1rem)}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button.right{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opts button:disabled{cursor:default}
+.fb{min-height:3em}
+
+/* podsumowanie */
+.check{list-style:none;padding:0;columns:2 280px;column-gap:2.5em;max-width:900px}
+.check li{break-inside:avoid;padding:.35em 0 .35em 1.8em;position:relative;max-width:none}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.links a{color:var(--ink);font-weight:600}
+
+/* nawigacja */
+nav.ctl{position:fixed;left:0;right:0;bottom:0;z-index:5;height:calc(72px + env(safe-area-inset-bottom,0px));padding:0 clamp(12px,3vw,32px) env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(6px);border-top:2px solid var(--ink)}
+.dots{flex:1;display:flex;gap:4px;align-items:center;overflow-x:auto;padding:6px 2px}
+.dots button{flex:1;min-width:14px;height:8px;border:0;background:var(--line);padding:0}
+.dots button.done{background:var(--ink-soft)}
+.dots button.cur{background:var(--margin);height:12px}
+.navbtn{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);font-size:1.2rem;font-weight:800;display:grid;place-items:center}
+.count{font-family:var(--mono);font-size:.9rem;min-width:4.2em;text-align:center}
+.theme{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.flowc{display:grid;gap:12px;max-width:540px;justify-items:center;margin:1em 0}
+.dec{border:2px solid var(--ink);background:var(--panel);padding:.8em 1.4em;font-family:var(--mono);font-weight:600;border-radius:40px}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.br{border:2px solid var(--line);padding:.8em;text-align:center;background:var(--panel);transition:background .3s,border-color .3s}
+.br b{display:block;font-family:var(--mono);color:var(--margin)}
+.br.on{border-color:var(--margin);background:var(--marker);color:#1D2A5C}
+.br.on b{color:#1D2A5C}
+.tbl{border-collapse:collapse;font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem)}
+.tbl td,.tbl th{border:1.5px solid var(--line);padding:.45em .9em;text-align:left;background:var(--panel)}
+.tbl th{font-family:var(--sans)}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-weight:600;color:#fff;font-family:var(--mono)}
+.chip.t{background:var(--ok)}.chip.f{background:var(--bad)}
+.tog{display:inline-flex;align-items:center;gap:.5em;border:2px solid var(--ink);background:var(--panel);padding:.45em .9em;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.tog[aria-pressed="false"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;max-width:560px;border-bottom:2px solid var(--ink);margin:2em 0 .3em}
+.bars div{flex:1;background:var(--ink);position:relative;transition:height .4s;min-height:2px}
+.bars div span{position:absolute;top:-1.5em;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.blabels{display:flex;gap:10px;max-width:560px;font-family:var(--mono)}
+.blabels span{flex:1;text-align:center}
+.out{font-family:var(--mono);background:#0E1430;color:#D8E0FF;padding:.8em 1em;border:2px solid var(--ink);white-space:pre-wrap;word-break:break-word;min-height:3em;max-height:14em;overflow:auto;font-size:clamp(.85rem,1.4vw,1rem)}
+.out .warn{color:#FF8E86}
+select{font:inherit;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.4em}
+input[type=range]{width:100%;max-width:420px;accent-color:var(--margin)}
+.part{background:none;border:0;border-bottom:3px solid var(--margin);font-family:var(--mono);font-size:inherit;padding:0 .15em;color:inherit;cursor:pointer}
+.part:hover{background:var(--grid)}
+.part.on{background:var(--marker);color:#1D2A5C}
+.part.on span{color:#1D2A5C}
+.big-num{font-family:var(--mono);font-size:clamp(2rem,6vw,4rem);font-weight:600;letter-spacing:-.02em}
+.trace{max-height:16em;overflow:auto}
+.trace .tbl td{padding:.3em .7em}
+.trace tr.now td{background:var(--marker);color:#1D2A5C}
+.pane h3{margin:.2em 0 .5em}
+label.inl{display:inline-flex;align-items:center;gap:.4em}
+
+/* ===== Układ pełnoekranowy (rzutnik, tablica) ===== */
+.inner{max-width:min(1800px,100%)}
+.lead{max-width:95ch}
+.two{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,3vw,60px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+/* elementy, które miały sztywną maks. szerokość, rozciągają się na całą kolumnę */
+.inner [style*="max-width"]{max-width:none!important}
+.ram,.bars,.blabels,.check,.flow,.divrow,.streams{max-width:none}
+.agenda,.quiz{max-width:1200px}
+/* linie kodu: zawijanie zamiast przewijania, numer linii w stałej kolumnie, zachowane spacje */
+.codebox{overflow-x:visible}
+.codebox .ln{display:block;position:relative;width:100%;padding:.28em .8em .28em 3em;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.codebox .ln::before{position:absolute;left:.8em;top:.28em;width:2em}
+/* większe pismo na dużych ekranach */
+@media (min-width:1400px){html{font-size:17px}}
+@media (min-width:1750px){html{font-size:19px}}
+@media (min-width:2300px){html{font-size:23px}}
+@media (min-width:1400px){
+  p,li{font-size:clamp(1rem,1.15vw,1.3rem);max-width:80ch}
+  .codebox{font-size:clamp(.9rem,1.05vw,1.2rem)}
+  .out,.console,.tbl{font-size:clamp(.9rem,.95vw,1.1rem)}
+}
+/* nagłówki skalowane także do wysokości ekranu (niskie rzutniki 720p) */
+h1{font-size:clamp(2.2rem,min(7vw,11vh),5.2rem)}
+h2{font-size:clamp(1.6rem,min(4.2vw,6.5vh),3rem)}
+@media (max-height:800px){
+  .slide{padding-top:clamp(14px,3vh,28px)}
+  h1,h2{margin-bottom:.35em}
+  p,li{line-height:1.45}
+  .row{margin:.4em 0}
+  .title-code{margin:.7em 0}
+  .codebox .ln{padding-top:.2em;padding-bottom:.2em}
+  .codebox .ln::before{top:.2em}
+}
+@media (max-height:800px){.check li{padding:.2em 0 .2em 1.8em}}
+
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+<section class="slide" data-title="Start"><div class="inner">
+  <p class="note">Zaawansowane Aplikacje Webowe · JavaScript</p>
+  <h1>Metody obiektu<br>i słowo this</h1>
+  <div class="title-code">mobile1.<span class="k">call</span>(<span class="s">'Kot Filemon'</span>)<span class="cursor"></span></div>
+  <div class="two">
+   <div>
+    <p class="lead">Obiekt nie tylko przechowuje dane. Potrafi też coś zrobić: zadzwonić, wysłać SMS-a, opowiedzieć o sobie.</p>
+    <p class="meta">Sterowanie: strzałki ← →, spacja lub przyciski na dole.</p>
+   </div>
+   <div>
+    <div class="row"><button class="btn primary" id="startRun">Wykonaj kod z tytułu</button></div>
+    <div class="out" id="startOut">// tu pojawi się wynik</div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Plan"><div class="inner">
+  <h2>Co omówimy</h2>
+  <p class="lead">Kliknij temat, aby do niego przejść.</p>
+  <ul class="agenda">
+   <li><button data-go="2"><span class="t">cecha?</span>Właściwość czy metoda</button></li>
+   <li><button data-go="3"><span class="t">f()</span>Jak wygląda metoda</button></li>
+   <li><button data-go="4"><span class="t">this</span>Kto jest this?</button></li>
+   <li><button data-go="5"><span class="t">krok</span>Metoda zmienia obiekt</button></li>
+   <li><button data-go="6"><span class="t">4 ✗</span>Znajdź błędy</button></li>
+   <li><button data-go="7"><span class="t">kod</span>Napisz metody sam</button></li>
+   <li><button data-go="8"><span class="t">?</span>Quiz</button></li>
+  </ul>
+</div></section>
+
+<section class="slide" data-title="Cecha czy czynność"><div class="inner">
+  <h2>Właściwość czy metoda?</h2>
+  <p class="lead">Obiekt opisuje rzecz: ma <mark>cechy</mark> (właściwości) i <mark>czynności</mark> (metody). Klikaj kafelek, aż pokaże dobrą grupę, potem sprawdź.</p>
+  <div class="two">
+   <div>
+    <div class="row" id="sortBox">
+     <button class="btn" data-k="w" data-l="marka telefonu" data-code="brand: 'Lumo'">marka telefonu</button>
+     <button class="btn" data-k="m" data-l="dzwonienie do kontaktu" data-code="call(contact) { … }">dzwonienie do kontaktu</button>
+     <button class="btn" data-k="w" data-l="kolor obudowy" data-code="caseColor: 'white'">kolor obudowy</button>
+     <button class="btn" data-k="m" data-l="wysłanie SMS-a" data-code="sendSms(message) { … }">wysłanie SMS-a</button>
+     <button class="btn" data-k="w" data-l="rozmiar pamięci" data-code="memorySize: '256 GB'">rozmiar pamięci</button>
+     <button class="btn" data-k="m" data-l="zrobienie zdjęcia" data-code="takePhoto() { … }">zrobienie zdjęcia</button>
+     <button class="btn" data-k="w" data-l="lista aplikacji" data-code="applications: []">lista aplikacji</button>
+     <button class="btn" data-k="m" data-l="pokazanie informacji" data-code="getInfo() { … }">pokazanie informacji</button>
+    </div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="sortCheck">Sprawdź</button><button class="btn" id="sortReset">Od nowa</button></div>
+   </div>
+   <div>
+    <div class="out" id="sortOut"></div>
+    <p class="note">cecha to rzeczownik, czynność to czasownik</p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Anatomia metody"><div class="inner">
+  <h2>Jak wygląda metoda</h2>
+  <p class="lead">Metoda to <mark>właściwość, której wartością jest funkcja</mark>. Kliknij linijkę, żeby zobaczyć objaśnienie.</p>
+  <div class="two">
+   <div class="codebox" id="kAnat">
+    <button class="ln" data-n="1" data-ex="obj"><span class="k">let</span> mobile1 = {</button>
+    <button class="ln" data-n="2" data-ex="prop">    brand: <span class="s">'Lumo'</span>,</button>
+    <button class="ln" data-n="3" data-ex="meth">    call: <span class="k">function</span> (contact = <span class="s">'Kot Filemon'</span>) {</button>
+    <button class="ln" data-n="4" data-ex="log">        console.log(<span class="s">`Calling ${contact}`</span>);</button>
+    <button class="ln" data-n="5" data-ex="close">    },</button>
+    <button class="ln" data-n="6" data-ex="short">    sendSms(message) {</button>
+    <button class="ln" data-n="7" data-ex="log2">        console.log(<span class="s">`Message: "${message}" was sent`</span>);</button>
+    <button class="ln" data-n="8" data-ex="end">    }</button>
+    <button class="ln" data-n="9" data-ex="end">};</button>
+    <button class="ln" data-n="10" data-ex="c1">mobile1.call();</button>
+    <button class="ln" data-n="11" data-ex="c2">mobile1.sendSms(<span class="s">'Hej!'</span>);</button>
+   </div>
+   <div>
+    <div class="explain" id="kAnatEx"><p class="note">← kliknij linijkę kodu</p></div>
+    <div class="row" style="margin-top:1em"><label class="inl">argument dla call: <input type="text" id="argCall" value="" placeholder="puste = bez argumentu"></label></div>
+    <div class="out" id="argOut"></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="this"><div class="inner">
+  <h2>Kto jest this?</h2>
+  <p class="lead"><code>this</code> to obiekt <mark>przed kropką</mark> w wywołaniu. Przewidź, co wypisze każde wywołanie.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kThis">
+     <div class="ln" data-n="1"><span class="k">let</span> mobile1 = {</div>
+     <div class="ln" data-n="2">    brand: <span class="s">'Lumo'</span>,</div>
+     <div class="ln" data-n="3">    getInfo() { console.log(<span class="k">this</span>.brand); }</div>
+     <div class="ln" data-n="4">};</div>
+     <div class="ln" data-n="5"><span class="k">let</span> mobile2 = { brand: <span class="s">'Nokto'</span>, getInfo: mobile1.getInfo };</div>
+     <div class="ln" data-n="6"><span class="k">let</span> mobile3 = { brand: <span class="s">'Fiko'</span>,</div>
+     <div class="ln" data-n="7">    getInfo: () =&gt; console.log(<span class="k">this</span>.brand) };</div>
+    </div>
+    <p class="note">mobile2 pożycza metodę od mobile1</p>
+   </div>
+   <div>
+    <table class="tbl" style="width:100%">
+     <tr><th>wywołanie</th><th>co wypisze?</th><th>wynik</th></tr>
+     <tr><td>mobile1.getInfo()</td><td><select id="th0"><option value="">?</option><option>Lumo</option><option>Nokto</option><option>Fiko</option><option>Lumo Pro</option><option>undefined</option></select></td><td id="thr0"></td></tr>
+     <tr><td>mobile2.getInfo()</td><td><select id="th1"><option value="">?</option><option>Lumo</option><option>Nokto</option><option>Fiko</option><option>Lumo Pro</option><option>undefined</option></select></td><td id="thr1"></td></tr>
+     <tr><td>mobile3.getInfo()</td><td><select id="th2"><option value="">?</option><option>Lumo</option><option>Nokto</option><option>Fiko</option><option>Lumo Pro</option><option>undefined</option></select></td><td id="thr2"></td></tr>
+     <tr><td>mobile1.brand = 'Lumo Pro';<br>mobile1.getInfo()</td><td><select id="th3"><option value="">?</option><option>Lumo</option><option>Nokto</option><option>Fiko</option><option>Lumo Pro</option><option>undefined</option></select></td><td id="thr3"></td></tr>
+    </table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="thisCheck">Sprawdź</button><button class="btn" id="thisReset">Od nowa</button><span class="meta" id="thisSum"></span></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Stan obiektu"><div class="inner">
+  <h2>Metoda zmienia obiekt</h2>
+  <p class="lead">Przez <code>this</code> metoda może zmienić dane obiektu, czyli jego <mark>stan</mark>. Najpierw przewidź wynik, potem sprawdź krok po kroku.</p>
+  <div class="two">
+   <div class="codebox" id="kBat">
+    <div class="ln" data-n="1"><span class="k">let</span> mobile1 = {</div>
+    <div class="ln" data-n="2">    battery: <span class="n">40</span>,</div>
+    <div class="ln" data-n="3">    useBattery(amount = <span class="n">10</span>) {</div>
+    <div class="ln" data-n="4">        <span class="k">this</span>.battery = <span class="k">this</span>.battery - amount;</div>
+    <div class="ln" data-n="5">    },</div>
+    <div class="ln" data-n="6">    charge() {</div>
+    <div class="ln" data-n="7">        <span class="k">this</span>.battery = <span class="n">100</span>;</div>
+    <div class="ln" data-n="8">    }</div>
+    <div class="ln" data-n="9">};</div>
+    <div class="ln" data-n="10">mobile1.useBattery();</div>
+    <div class="ln" data-n="11">mobile1.useBattery(<span class="n">25</span>);</div>
+    <div class="ln" data-n="12">mobile1.charge();</div>
+    <div class="ln" data-n="13">mobile1.useBattery();</div>
+    <div class="ln" data-n="14">console.log(mobile1.battery);</div>
+   </div>
+   <div>
+    <div class="row"><label class="inl">Co wypisze linia 14? <input type="number" id="batGuess"></label><button class="btn primary" id="batCheck">Sprawdź</button></div>
+    <p id="batRes" class="meta"></p>
+    <div class="row"><button class="btn primary" id="batNext">Następny krok</button><button class="btn" id="batReset">Od początku</button></div>
+    <p id="batOpis"></p>
+    <div class="trace"><table class="tbl" id="batTrace" style="width:100%"></table></div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Znajdź błędy"><div class="inner">
+  <h2>Znajdź 4 błędy</h2>
+  <p class="lead">Kliknij linijki, w których jest błąd, i naciśnij „Sprawdź”.</p>
+  <div class="two">
+   <div class="codebox" id="kBug">
+    <button class="ln" data-n="1"><span class="k">let</span> mobile1 = {</button>
+    <button class="ln" data-n="2">    brand: <span class="s">'Lumo'</span>,</button>
+    <button class="ln" data-n="3">    model: <span class="s">'Lumo X5'</span></button>
+    <button class="ln" data-n="4">    memorySize: <span class="s">'256 GB'</span>,</button>
+    <button class="ln" data-n="5">    getInfo() {</button>
+    <button class="ln" data-n="6">        console.log(<span class="s">`Brand: ${brand}`</span>);</button>
+    <button class="ln" data-n="7">    },</button>
+    <button class="ln" data-n="8">    getMemorySize: () =&gt; {</button>
+    <button class="ln" data-n="9">        console.log(<span class="s">`Pamięć: ${this.memorySize}`</span>);</button>
+    <button class="ln" data-n="10">    },</button>
+    <button class="ln" data-n="11">    sendSms(message) {</button>
+    <button class="ln" data-n="12">        console.log(<span class="s">`Message: "${message}" was sent`</span>);</button>
+    <button class="ln" data-n="13">    }</button>
+    <button class="ln" data-n="14">};</button>
+    <button class="ln" data-n="15">mobile1.getInfo;</button>
+    <button class="ln" data-n="16">mobile1.sendSms(<span class="s">'Hej!'</span>);</button>
+   </div>
+   <div>
+    <div class="row"><button class="btn primary" id="bugCheck">Sprawdź</button><button class="btn" id="bugReset">Od nowa</button></div>
+    <div class="out" id="bugOut">Zaznaczone linijki: 0</div>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Napisz kod"><div class="inner">
+  <h2>Napisz metody sam</h2>
+  <p class="lead">Dopisz dwie metody w miejscu komentarzy TODO i kliknij „Uruchom i sprawdź”.</p>
+  <div class="two">
+   <div>
+    <textarea id="codeIn" spellcheck="false" style="width:100%;min-height:17em;font-family:monospace;font-size:.85em;line-height:1.45;padding:.6em;box-sizing:border-box"></textarea>
+    <div class="row" style="margin-top:.6em"><button class="btn primary" id="codeRun">Uruchom i sprawdź</button><button class="btn" id="codeSol">Pokaż przykładowe rozwiązanie</button><button class="btn" id="codeReset">Od nowa</button></div>
+   </div>
+   <div>
+    <div class="out" id="codeOut"></div>
+    <table class="tbl" id="codeReq" style="width:100%;margin-top:.8em"></table>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Quiz"><div class="inner quiz" id="quiz"></div></section>
+
+<section class="slide" data-title="Podsumowanie"><div class="inner">
+  <h2>Do zapamiętania</h2>
+  <ul class="check">
+   <li>Właściwość to cecha obiektu (dana), metoda to czynność (funkcja w obiekcie).</li>
+   <li>Pełny zapis: <code>call: function (contact) { … }</code>, skrócony: <code>call(contact) { … }</code>.</li>
+   <li>Właściwości i metody rozdzielamy przecinkami.</li>
+   <li>Wywołanie zawsze z nawiasami: <code>mobile1.getInfo()</code>.</li>
+   <li><code>this</code> w metodzie to obiekt przed kropką w wywołaniu.</li>
+   <li>Bez <code>this.</code> JavaScript szuka zwykłej zmiennej i zgłasza błąd.</li>
+   <li>Parametr domyślny <code>(contact = 'Kot Filemon')</code> działa, gdy brak argumentu.</li>
+   <li>Funkcja strzałkowa nie ma własnego this, więc nie pisz nią metod.</li>
+   <li><code>console.log</code> wypisuje, <code>return</code> oddaje wynik do dalszego użycia.</li>
+  </ul>
+  <p class="links">Dokumentacja: <a href="https://developer.mozilla.org/pl/docs/Learn/JavaScript/Objects/Basics" target="_blank" rel="noopener">MDN: podstawy obiektów</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/this" target="_blank" rel="noopener">MDN: this</a> · <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Method_definitions" target="_blank" rel="noopener">MDN: definicje metod</a></p>
+  <p class="note">Dalej: obiekt, który przechowuje tablicę innych obiektów</p>
+</div></section>
+
+</main>
+<nav class="ctl" aria-label="Nawigacja prezentacji">
+ <button class="navbtn" id="prev" aria-label="Poprzedni slajd">‹</button>
+ <div class="dots" id="dots"></div>
+ <span class="count" id="count"></span>
+ <button class="navbtn" id="next" aria-label="Następny slajd">›</button>
+ <button class="theme" id="theme" aria-label="Zmień motyw jasny/ciemny">◐</button>
+</nav>
+
+<script>
+(function(){
+const KEY='zaw-metody-obiektu-js';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const slides=[...document.querySelectorAll('.slide')];
+const dots=$('dots'),count=$('count');
+let cur=0;
+slides.forEach((s,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'. '+s.dataset.title);b.title=s.dataset.title;b.onclick=()=>go(i);dots.appendChild(b)});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i)});
+  [...dots.children].forEach((d,k)=>{d.className=k===i?'cur':(k<i?'done':'')});
+  count.textContent=(i+1)+' / '+slides.length;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem(KEY+'-slide',i)}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!e.target.matches('button'))){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>70&&!e.target.closest('.codebox,.console,.out,input,.bars'))go(cur+(dx<0?1:-1));tx=null},{passive:true});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+const root=document.documentElement;
+$('theme').onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('cppkurs-theme',root.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem('cppkurs-theme');if(t)root.dataset.theme=t}catch(e){}
+
+function bindExplain(boxId,outId,map){
+  const box=$(boxId),out=$(outId);
+  box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('[data-ex]').forEach(x=>x.classList.remove('on'));
+    box.querySelectorAll('[data-ex="'+b.dataset.ex+'"]').forEach(x=>x.classList.add('on'));
+    const e=map[b.dataset.ex];out.innerHTML='<h3>'+e[0]+'</h3><p>'+e[1]+'</p>';
+  });
+}
+function hlLines(boxId,set){$(boxId).querySelectorAll('.ln').forEach(l=>l.classList.toggle('on',set.includes(+l.dataset.n)))}
+function makeQuiz(el,Q){
+  let qi=0,score=0;
+  function show(){
+    if(qi>=Q.length){
+      el.innerHTML='<h2>Wynik: '+score+' / '+Q.length+'</h2><p class="lead">'+(score===Q.length?'Komplet! Możesz śmiało ruszać do kolejnego odcinka.':score>=Q.length-2?'Bardzo dobrze. Przejrzyj jeszcze slajdy z pytań, w których był błąd.':'Warto wrócić do wcześniejszych slajdów, a potem spróbować ponownie.')+'</p><div class="row"><button class="btn primary" id="qAgain">Spróbuj ponownie</button></div>';
+      $('qAgain').onclick=()=>{qi=0;score=0;show()};return;
+    }
+    const q=Q[qi];
+    el.innerHTML='<p class="qnum">Pytanie '+(qi+1)+' z '+Q.length+'</p><h2>'+esc(q[0])+'</h2>'+(q[4]?'<div class="codebox" style="max-width:640px;margin-bottom:.5em">'+q[4].split('\n').map((l,k)=>'<div class="ln" data-n="'+(k+1)+'">'+esc(l)+'</div>').join('')+'</div>':'')+'<div class="opts"></div><p class="fb" aria-live="polite"></p><div class="row"><button class="btn primary" id="qNext" hidden>'+(qi===Q.length-1?'Pokaż wynik':'Następne pytanie')+'</button></div>';
+    const o=el.querySelector('.opts'),fb=el.querySelector('.fb'),nx=$('qNext');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+      b.onclick=()=>{[...o.children].forEach((x,k)=>{x.disabled=true;if(k===q[2])x.classList.add('right')});
+        if(i===q[2]){score++;fb.innerHTML='<b>Dobrze!</b> '+q[3]}else{b.classList.add('wrong');fb.innerHTML='<b>Nie tym razem.</b> '+q[3]}
+        nx.hidden=false;nx.focus()};o.appendChild(b)});
+    nx.onclick=()=>{qi++;show()};
+  }
+  show();
+}
+
+// start
+$('startRun').onclick=()=>{$('startOut').textContent="mobile1.call('Kot Filemon')\n→ Calling Kot Filemon";};
+
+// właściwość czy metoda
+const SORT_LAB={w:'właściwość',m:'metoda'};
+const sortBtns=[...document.querySelectorAll('#sortBox button')];
+function sortDraw(b){const s=b.dataset.s;b.innerHTML=esc(b.dataset.l)+' → <b>'+(s?SORT_LAB[s]:'?')+'</b>';}
+function sortReset(){sortBtns.forEach(b=>{b.dataset.s='';b.style.outline='';sortDraw(b);});$('sortOut').textContent='Kliknij kafelki (? → właściwość → metoda), potem „Sprawdź”.';}
+sortBtns.forEach(b=>{b.onclick=()=>{b.dataset.s=b.dataset.s===''?'w':b.dataset.s==='w'?'m':'';b.style.outline='';sortDraw(b);};});
+$('sortCheck').onclick=()=>{let ok=0;const lines=[];
+  sortBtns.forEach(b=>{const good=b.dataset.s===b.dataset.k;if(good)ok++;
+    b.style.outline='3px solid '+(good?'#3a9d5d':'#d9534f');
+    lines.push((good?'✓ ':'✗ ')+b.dataset.l+'\n    '+b.dataset.code+'   // '+SORT_LAB[b.dataset.k]);});
+  $('sortOut').textContent='Dobrze: '+ok+' / '+sortBtns.length+(ok===sortBtns.length?'  Brawo!':'')+'\n\n'+lines.join('\n');};
+$('sortReset').onclick=sortReset;sortReset();
+
+// anatomia metody
+bindExplain('kAnat','kAnatEx',{
+  obj:['let mobile1 = {','Tworzymy obiekt. Wszystko między klamrami to jego właściwości i metody.'],
+  prop:["brand: 'Lumo',",'Zwykła właściwość, czyli dana (tekst). Przecinek, bo dalej są kolejne elementy obiektu.'],
+  meth:["call: function (contact = 'Kot Filemon') {",'Metoda w pełnym zapisie: klucz <code>call</code>, dwukropek, a wartością jest funkcja.<br><code>contact = \'Kot Filemon\'</code> to <b>parametr domyślny</b>: użyty, gdy wywołasz metodę bez argumentu.'],
+  log:['console.log(`Calling ${contact}`);','Treść metody. Wypisuje tekst z wstawionym parametrem (template literal).'],
+  close:['},','Koniec metody. Przecinek, bo w obiekcie jest jeszcze jedna metoda. Bez niego: <b>SyntaxError</b>.'],
+  short:['sendSms(message) {','Skrócony zapis metody: bez dwukropka i bez słowa <code>function</code>. Działa tak samo jak pełny.'],
+  log2:['console.log(`Message: "${message}" was sent`);','Cudzysłowy " " wewnątrz odwrotnych apostrofów są zwykłymi znakami tekstu.'],
+  end:['} oraz };','Koniec ostatniej metody (bez przecinka) i koniec całego obiektu.'],
+  c1:['mobile1.call();','Wywołanie bez argumentu, więc contact = \'Kot Filemon\'.<br>Wynik: <code>Calling Kot Filemon</code>'],
+  c2:["mobile1.sendSms('Hej!');",'Wywołanie z argumentem: message = \'Hej!\'.<br>Wynik: <code>Message: "Hej!" was sent</code>']
+});
+function upArg(){const v=$('argCall').value;const has=v!=='';
+  $('argOut').textContent=(has?"mobile1.call('"+v+"')":'mobile1.call()')+'\n→ Calling '+(has?v:'Kot Filemon')+(has?'':'\n// brak argumentu: wartość domyślna');}
+$('argCall').oninput=upArg;upArg();
+
+// kto jest this
+const THIS_ROWS=[
+  ['Lumo','this to mobile1, więc wypisze jego markę.'],
+  ['Nokto','Metoda pochodzi z mobile1, ale wywołano ją na mobile2, więc this to mobile2.'],
+  ['undefined','Funkcja strzałkowa nie ma własnego this, więc nie widzi marki mobile3.'],
+  ['Lumo Pro','this czyta dane w chwili wywołania, a marka jest już zmieniona.']
+];
+$('thisCheck').onclick=()=>{let ok=0;
+  THIS_ROWS.forEach((r,i)=>{const v=$('th'+i).value;const good=v===r[0];if(good)ok++;
+    $('thr'+i).innerHTML=v===''?'<span class="meta">wybierz odpowiedź</span>':'<span class="chip '+(good?'t':'f')+'">'+(good?'✓':'✗ '+esc(r[0]))+'</span> '+esc(r[1]);});
+  $('thisSum').textContent='Dobrze: '+ok+' / '+THIS_ROWS.length;};
+$('thisReset').onclick=()=>{THIS_ROWS.forEach((r,i)=>{$('th'+i).value='';$('thr'+i).innerHTML='';});$('thisSum').textContent='';};
+
+// stan obiektu krok po kroku
+const BAT=[
+  {l:[1,2,3,4,5,6,7,8,9],op:'utworzenie obiektu',amount:'—',bat:40,opis:'Powstaje obiekt mobile1. Na start battery = 40.'},
+  {l:[10,3,4],op:'useBattery()',amount:'10',bat:30,opis:'Brak argumentu, więc amount = 10 (wartość domyślna). this.battery = 40 − 10 = 30.'},
+  {l:[11,3,4],op:'useBattery(25)',amount:'25',bat:5,opis:'Argument 25 zastępuje wartość domyślną: 30 − 25 = 5.'},
+  {l:[12,6,7],op:'charge()',amount:'—',bat:100,opis:'charge() przypisuje 100. Poprzednia wartość nie ma znaczenia.'},
+  {l:[13,3,4],op:'useBattery()',amount:'10',bat:90,opis:'Znów bez argumentu: 100 − 10 = 90.'},
+  {l:[14],op:'console.log',amount:'—',bat:90,opis:'Konsola wypisuje aktualny stan: 90.'}
+];
+let bk=-1;
+function batDraw(){hlLines('kBat',bk<0?[]:BAT[bk].l);
+  $('batOpis').textContent=bk<0?'Kliknij „Następny krok”.':BAT[bk].opis;
+  $('batNext').disabled=bk>=BAT.length-1;
+  $('batTrace').innerHTML='<tr><th>krok</th><th>wywołanie</th><th>amount</th><th>battery</th></tr>'+BAT.slice(0,bk+1).map((s,i)=>'<tr'+(i===bk?' class="now"':'')+'><td>'+(i+1)+'</td><td>'+esc(s.op)+'</td><td>'+s.amount+'</td><td>'+s.bat+'</td></tr>').join('');}
+$('batNext').onclick=()=>{if(bk<BAT.length-1)bk++;batDraw();};
+$('batReset').onclick=()=>{bk=-1;batDraw();};
+$('batCheck').onclick=()=>{const raw=$('batGuess').value.trim();const v=Number(raw);
+  if(raw===''){$('batRes').textContent='Wpisz liczbę.';return;}
+  $('batRes').innerHTML=v===90?'<span class="chip t">✓</span> Dobrze: 40 → 30 → 5 → 100 → 90.':'<span class="chip f">✗</span> To nie '+esc(raw)+'. Przejdź program krokami i zobacz, gdzie wynik się rozjeżdża.';};
+batDraw();
+
+// znajdź błędy
+const BUGS={
+  3:"Brak przecinka po 'Lumo X5'. Następna właściwość daje SyntaxError.",
+  6:'Brak this: ${brand} szuka zwykłej zmiennej, więc ReferenceError. Ma być ${this.brand}.',
+  8:'Funkcja strzałkowa nie ma własnego this, więc this.memorySize nie odczyta pamięci telefonu.',
+  15:'Brak nawiasów: mobile1.getInfo tylko odczytuje funkcję, nie wywołuje jej.'
+};
+const bugLines=[...document.querySelectorAll('#kBug .ln')];
+function bugCount(){$('bugOut').textContent='Zaznaczone linijki: '+bugLines.filter(b=>b.classList.contains('on')).length;}
+bugLines.forEach(b=>{b.onclick=()=>{b.classList.toggle('on');b.style.background='';bugCount();};});
+$('bugCheck').onclick=()=>{let found=0,wrong=0;const msgs=[];
+  bugLines.forEach(b=>{const n=b.dataset.n,sel=b.classList.contains('on'),bug=n in BUGS;
+    b.style.background=bug?(sel?'rgba(58,157,93,.28)':'rgba(217,83,79,.25)'):(sel?'rgba(217,83,79,.25)':'');
+    if(bug&&sel)found++;if(!bug&&sel){wrong++;msgs.push('✗ linia '+n+': tu nie ma błędu');}});
+  Object.keys(BUGS).reverse().forEach(n=>{const sel=bugLines.find(b=>b.dataset.n===n).classList.contains('on');
+    msgs.unshift((sel?'✓':'✗ pominięta')+' linia '+n+': '+BUGS[n]);});
+  $('bugOut').textContent='Znalezione: '+found+' / 4'+(wrong?', zbędne zaznaczenia: '+wrong:'')+'\n\n'+msgs.join('\n');};
+$('bugReset').onclick=()=>{bugLines.forEach(b=>{b.classList.remove('on');b.style.background='';});bugCount();};
+
+// napisz kod
+const CODE_START=[
+  'let mobile1 = {',
+  "    brand: 'Lumo',",
+  "    model: 'Lumo X5',",
+  "    memorySize: '256 GB',",
+  '',
+  '    // TODO 1: metoda sendSms(message) wypisuje:',
+  '    // Message: "treść wiadomości" was sent',
+  '',
+  '    // TODO 2: metoda getMemorySize() wypisuje:',
+  '    // Wielkość pamięci: 256 GB   (użyj this!)',
+  '};',
+  '',
+  "mobile1.sendSms('To jest wiadomość');",
+  'mobile1.getMemorySize();'
+].join('\n');
+const CODE_SOL=[
+  'let mobile1 = {',
+  "    brand: 'Lumo',",
+  "    model: 'Lumo X5',",
+  "    memorySize: '256 GB',",
+  '',
+  '    sendSms(message) {',
+  '        console.log(`Message: "${message}" was sent`);',
+  '    },',
+  '',
+  '    getMemorySize() {',
+  '        console.log(`Wielkość pamięci: ${this.memorySize}`);',
+  '    }',
+  '};',
+  '',
+  "mobile1.sendSms('To jest wiadomość');",
+  'mobile1.getMemorySize();'
+].join('\n');
+function fmtVal(v){if(typeof v==='string')return v;if(v===undefined)return 'undefined';try{return JSON.stringify(v);}catch(e){return String(v);}}
+function runUser(code){
+  const logs=[];const con={log:(...a)=>{if(logs.length<200)logs.push(a.map(fmtVal).join(' '));}};
+  let obj,err=null;const grab=o=>{obj=o;};
+  const body=code.replace(/\b(let|const)\s+mobile1\b/,'var mobile1');
+  try{(new Function('console','__grab','try {\n'+body+'\n} finally { __grab(typeof mobile1 === "undefined" ? undefined : mobile1); }'))(con,grab);}
+  catch(e){err=e;}
+  return {logs,obj,err};
+}
+function callM(r,name,args){r.logs.length=0;
+  if(!r.obj||typeof r.obj[name]!=='function')return {out:'',ret:undefined,err:true};
+  let ret,err=false;try{ret=r.obj[name](...args);}catch(e){err=true;}
+  return {out:r.logs.join('\n').trim(),ret:typeof ret==='string'?ret.trim():ret,err};}
+function says(c,txt){return c.out===txt||c.ret===txt;}
+function codeCheck(){const code=$('codeIn').value;const r=runUser(code);
+  const printed=r.logs.slice();
+  $('codeOut').innerHTML='<b>Konsola:</b>\n'+(printed.length?esc(printed.join('\n')):'(pusto)')+(r.err?'\n<span class="warn">'+esc(r.err.name+': '+r.err.message)+'</span>':'');
+  const hasSms=!!(r.obj&&typeof r.obj.sendSms==='function');
+  const sms=callM(r,'sendSms',['Hej']);
+  const mem=callM(r,'getMemorySize',[]);
+  let usesThis=false;
+  if(r.obj&&typeof r.obj.getMemorySize==='function'){const old=r.obj.memorySize;r.obj.memorySize='512 GB';
+    const m2=callM(r,'getMemorySize',[]);r.obj.memorySize=old;
+    usesThis=says(m2,'Wielkość pamięci: 512 GB')&&/this\s*\.\s*memorySize/.test(code);}
+  const req=[
+    ['Kod wykonuje się bez błędu',!r.err],
+    ['mobile1 ma metodę sendSms',hasSms],
+    ['sendSms(\'Hej\') wypisuje: Message: "Hej" was sent',says(sms,'Message: "Hej" was sent')],
+    ['getMemorySize() wypisuje: Wielkość pamięci: 256 GB',says(mem,'Wielkość pamięci: 256 GB')],
+    ['getMemorySize korzysta z this.memorySize (po zmianie na 512 GB wynik też się zmienia)',usesThis]
+  ];
+  $('codeReq').innerHTML='<tr><th>wymaganie</th><th></th></tr>'+req.map(q=>'<tr><td>'+esc(q[0])+'</td><td><span class="chip '+(q[1]?'t':'f')+'">'+(q[1]?'✓':'✗')+'</span></td></tr>').join('');}
+const codeIn=$('codeIn');
+codeIn.addEventListener('keydown',e=>{e.stopPropagation();
+  if(e.key==='Tab'){e.preventDefault();const s=codeIn.selectionStart,en=codeIn.selectionEnd;codeIn.value=codeIn.value.slice(0,s)+'    '+codeIn.value.slice(en);codeIn.selectionStart=codeIn.selectionEnd=s+4;}});
+$('codeRun').onclick=codeCheck;
+$('codeSol').onclick=()=>{codeIn.value=CODE_SOL;codeCheck();};
+$('codeReset').onclick=()=>{codeIn.value=CODE_START;codeCheck();};
+codeIn.value=CODE_START;codeCheck();
+
+makeQuiz($('quiz'),[
+  ['Jak wywołać metodę getInfo obiektu mobile1?',['mobile1.getInfo','mobile1.getInfo()','getInfo(mobile1)','mobile1[getInfo]'],1,'Metodę wywołujemy przez obiekt, kropkę, nazwę i nawiasy. Bez nawiasów dostajemy samą funkcję.'],
+  ['Na co wskazuje this w tym wywołaniu?',['Na obiekt mobile1','Na funkcję getInfo','Na całe okno przeglądarki','Na ostatnio utworzony obiekt'],0,'this to obiekt stojący przed kropką w wywołaniu.','mobile1.getInfo();'],
+  ['Co wypisze ten kod?',['undefined','Calling','Calling Kot Filemon','Błąd: brak argumentu'],2,'Bez argumentu parametr dostaje wartość domyślną.',"let mobile1 = {\n    call(contact = 'Kot Filemon') {\n        console.log(`Calling ${contact}`);\n    }\n};\nmobile1.call();"],
+  ['getInfo tylko wypisuje tekst (bez return). Co pokaże konsola?',['Tylko tekst','Nic','Błąd składni','Tekst, a pod nim undefined'],3,'Metoda sama wypisuje tekst, a potem zwraca undefined, które wypisuje zewnętrzny console.log.','console.log(mobile1.getInfo());'],
+  ['Czego brakuje w tym obiekcie?',['Średnika po \'Lumo\'','Przecinka po \'Lumo\'','Słowa function','Dwukropka po getInfo'],1,'Właściwości i metody rozdzielamy przecinkami.',"let mobile1 = {\n    brand: 'Lumo'\n    getInfo() { console.log(this.brand); }\n};"],
+  ['Dlaczego ta metoda nie odczyta marki telefonu?',['Strzałka nie może mieć return','Funkcja strzałkowa nie ma własnego this','Właściwość brand jest ukryta','Strzałek nie wolno pisać w obiekcie'],1,'Funkcja strzałkowa bierze this z otoczenia, a nie z obiektu.',"let mobile1 = {\n    brand: 'Lumo',\n    getInfo: () => console.log(this.brand)\n};"],
+  ['Ile wynosi battery na końcu?',['140','40','100','undefined'],2,'charge() przypisuje nową wartość, a nie dodaje.',"let mobile1 = {\n    battery: 40,\n    charge() { this.battery = 100; }\n};\nmobile1.charge();\nconsole.log(mobile1.battery);"]
+]);
+
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>0)start=h-1;else{try{const s=localStorage.getItem(KEY+'-slide');if(s)start=+s}catch(e){}}
+go(start);
+
+})();
+</script>
+<!-- materialy.py: poprawki nawigacji prezentacji (ankieta uczniów 10.2026), wklejane przed </body> po build.py skilla -->
+<style>
+.dots button,.dots button.done,.dots button.cur{height:28px;padding:10px 0;background-clip:content-box}
+.dots button.cur{padding:8px 0}
+.navbtn{width:52px;height:52px;font-size:1.5rem}
+textarea,input,code,pre,.codebox{font-variant-ligatures:none}
+.navhint{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);white-space:nowrap}
+.navhint[hidden]{display:none}
+@media (max-width:560px){.navhint{display:none}}
+.quiz .opts{counter-reset:opt}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
+.quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
+.quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
+@media (hover:none){.quiz .qnum::after{content:none}}
+</style>
+<script>
+(function () {
+  var next = document.getElementById("next"), prev = document.getElementById("prev"), nav = document.querySelector("nav.ctl");
+  if (!next || !prev || !nav) return;
+  var hint = document.createElement("span");
+  hint.className = "navhint";
+  hint.hidden = true;
+  hint.textContent = "Esc — wróć do slajdów";
+  nav.insertBefore(hint, document.getElementById("count"));
+  function field(t) { return !!t && (t.isContentEditable || (t.matches && t.matches("input,select,textarea"))); }
+  function stop(e) { e.stopPropagation(); }
+  // Klawisz w polu do pisania nie może dojść do nawigacji skilla (ona pomija tylko input/select, więc spacja
+  // w <textarea> przełączała slajd). Faza przechwytywania: Esc oddaje klawiaturę slajdom, PageDown/PageUp
+  // i Alt+strzałki przełączają z pola; resztę zatrzymuje jednorazowy słuchacz na samym polu — po obsłudze
+  // przez stronę, przed nawigacją na document.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (!field(t)) return;
+    if (e.key === "Escape") { e.preventDefault(); t.blur(); }
+    else if (e.key === "PageDown" || (e.altKey && e.key === "ArrowRight")) { e.preventDefault(); t.blur(); next.click(); }
+    else if (e.key === "PageUp" || (e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); t.blur(); prev.click(); }
+    else t.addEventListener("keydown", stop, {once: true});
+  }, true);
+  // Enter przełącza dalej, gdy fokus nie stoi na niczym klikalnym (przycisk, link, rozwijane) ani w polu.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (e.key === "Enter" && !e.defaultPrevented && !field(t) && !(t.closest && t.closest("button,a,summary,label,[tabindex]"))) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // Quiz skilla: cyfra wybiera odpowiedź na aktywnym slajdzie (Enter potem klika „Następne pytanie”, które ma fokus).
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !/^[1-9]$/.test(e.key) || field(e.target)) return;
+    var opts = document.querySelector(".slide.active .quiz .opts");
+    var b = opts && opts.querySelectorAll("button")[+e.key - 1];
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+  });
+  // Po wyborze z listy, pola wyboru albo suwaka (myszką) klawiatura wraca do slajdów.
+  document.addEventListener("change", function (e) {
+    if (e.target.matches("select,input[type=checkbox],input[type=radio]")) e.target.blur();
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (e.target.matches && e.target.matches("input[type=range]")) setTimeout(function () { e.target.blur(); }, 0);
+  });
+  document.addEventListener("focusin", function (e) {
+    hint.hidden = !(field(e.target) && !(e.target.matches && e.target.matches("input[type=range],input[type=checkbox],input[type=radio]")));
+  });
+  document.addEventListener("focusout", function () { hint.hidden = true; });
+})();
+</script>
+</body>
+</html>

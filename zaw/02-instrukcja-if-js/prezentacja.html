@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="materialy" content="strona-grupy">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline' file:; font-src 'self' file:; img-src 'self' data: file:; frame-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="../../assets/fonty.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instrukcja warunkowa if…else w JavaScript</title>
+<style>
+
+:root{
+  --paper:#FBFCFF; --grid:#DCE6F5; --ink:#1D2A5C; --ink-soft:#4A5785;
+  --margin:#D9433B; --marker:#FFE45C; --code-bg:#EEF2FA; --line:#C5D3EA;
+  --ok:#1F8A5B; --bad:#C2372F; --panel:#FFFFFF;
+  --sans:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"JetBrains Mono", Consolas, "Courier New", monospace;
+  --hand:"Caveat", "Comic Sans MS", cursive;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+    --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+    --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#131A2E; --grid:#1F2945; --ink:#E3E8F7; --ink-soft:#A3AECF;
+  --margin:#F06A5F; --marker:#E8C93A; --code-bg:#1B2440; --line:#2E3A5E;
+  --ok:#4CC98E; --bad:#F07A70; --panel:#18203A;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  height:100%;margin:0;color:var(--ink);font-family:var(--sans);
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:24px 24px;
+  overflow:hidden;
+}
+/* czerwony margines zeszytu */
+body::before{content:"";position:fixed;top:0;bottom:0;left:clamp(18px,5vw,64px);width:2px;background:var(--margin);opacity:.7;z-index:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
+
+.deck{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0 0 72px 0;overflow-y:auto;
+  padding:clamp(20px,5vh,56px) clamp(20px,5vw,72px) 24px calc(clamp(18px,5vw,64px) + clamp(20px,4vw,48px));
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .35s ease, transform .35s ease, visibility 0s .35s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .35s ease, transform .35s ease}
+.slide.before{transform:translateX(-24px)}
+.inner{max-width:1080px}
+h1,h2{font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:0 0 .5em}
+h1{font-size:clamp(2.4rem,7vw,5.2rem)}
+h2{font-size:clamp(1.8rem,4.2vw,3rem)}
+p,li{font-size:clamp(1rem,1.6vw,1.2rem);line-height:1.55;max-width:68ch}
+.lead{font-size:clamp(1.1rem,2vw,1.45rem);color:var(--ink-soft)}
+.note{font-family:var(--hand);font-size:clamp(1.4rem,2.4vw,1.9rem);color:var(--margin);line-height:1.15;transform:rotate(-1.5deg);display:inline-block}
+mark{background:linear-gradient(transparent 45%, var(--marker) 45%, var(--marker) 90%, transparent 90%);color:inherit;padding:0 .1em}
+code,.mono{font-family:var(--mono);font-size:.92em}
+.k{color:#7A3FC2}.s{color:#1F8A5B}.n{color:#C2372F}.p{color:#2563C9}.c{color:var(--ink-soft);font-style:italic}
+:root[data-theme="dark"] .k{color:#C29BFF} :root[data-theme="dark"] .s{color:#6FD8A2} :root[data-theme="dark"] .n{color:#FF8E86} :root[data-theme="dark"] .p{color:#7FB0FF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .k{color:#C29BFF}:root:not([data-theme="light"]) .s{color:#6FD8A2}:root:not([data-theme="light"]) .n{color:#FF8E86}:root:not([data-theme="light"]) .p{color:#7FB0FF}}
+
+/* tytuł */
+.title-code{font-family:var(--mono);font-size:clamp(1rem,2.2vw,1.5rem);background:var(--code-bg);border:2px solid var(--ink);padding:.9em 1.1em;display:inline-block;margin:1.2em 0;box-shadow:6px 6px 0 var(--ink)}
+.cursor{display:inline-block;width:.6em;height:1.1em;background:var(--ink);vertical-align:-.15em;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.meta{color:var(--ink-soft);font-size:1rem}
+.meta a{color:inherit}
+
+/* agenda */
+.agenda{list-style:none;padding:0;margin:0;display:grid;gap:2px;max-width:760px}
+.agenda li{max-width:none}
+.agenda button{width:100%;display:grid;grid-template-columns:5.5em 1fr;gap:1em;text-align:left;background:transparent;border:0;border-bottom:1px dashed var(--line);padding:.6em .2em;font-size:clamp(1rem,1.6vw,1.15rem)}
+.agenda button:hover{background:var(--code-bg)}
+.agenda .t{font-family:var(--mono);color:var(--margin)}
+
+/* dwie kolumny */
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:clamp(20px,4vw,48px);align-items:start}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+
+/* drzewo plików */
+.tree{font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem);background:var(--panel);border:2px solid var(--ink);padding:1em;box-shadow:6px 6px 0 var(--ink)}
+.tree button{display:block;width:100%;text-align:left;background:none;border:0;padding:.35em .5em;border-radius:3px;font-family:var(--mono);font-size:inherit}
+.tree button:hover{background:var(--code-bg)}
+.tree button[aria-pressed="true"]{background:var(--marker);color:#1D2A5C}
+.tree .dir{padding:.35em .5em;color:var(--ink-soft)}
+.tree .ind1{padding-left:1.6em}.tree .ind2{padding-left:3.2em}
+.explain{border-left:4px solid var(--margin);padding:.4em 0 .4em 1em;min-height:9em}
+.explain h3{margin:0 0 .3em;font-size:1.4rem;font-family:var(--mono)}
+.tag{display:inline-block;font-size:.85rem;border:1.5px solid currentColor;padding:.05em .55em;border-radius:99px;margin-bottom:.6em}
+
+/* kod klikalny */
+.codebox{background:var(--code-bg);border:2px solid var(--ink);font-family:var(--mono);font-size:clamp(.85rem,1.45vw,1.05rem);overflow-x:auto;box-shadow:6px 6px 0 var(--ink)}
+.codebox .ln{display:flex;width:100%;background:none;border:0;text-align:left;padding:.28em .8em;font-family:var(--mono);font-size:inherit;white-space:pre}
+.codebox .ln::before{content:attr(data-n);width:2em;flex:none;color:var(--ink-soft);opacity:.6}
+.codebox button.ln:hover{background:var(--grid)}
+.codebox .ln.on{background:var(--marker);color:#1D2A5C}
+.codebox .ln.on span{color:#1D2A5C}
+.codebox div.ln{cursor:default}
+
+/* strumienie */
+.streams{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:1em;margin:1.5em 0;max-width:820px}
+.box{border:2px solid var(--ink);background:var(--panel);padding:1em;text-align:center;font-weight:600;min-height:5.5em;display:flex;flex-direction:column;justify-content:center;gap:.3em}
+.box small{font-weight:400;color:var(--ink-soft)}
+.arrow{font-family:var(--mono);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:600;text-align:center;color:var(--margin);min-width:3.5em;position:relative}
+.packet{position:absolute;top:-1.2em;left:50%;font-size:.9rem;background:var(--marker);color:#1D2A5C;padding:.1em .5em;transform:translateX(-50%);white-space:nowrap;opacity:0}
+.packet.go-right{animation:goR 1.1s ease forwards}
+.packet.go-left{animation:goL 1.1s ease forwards}
+@keyframes goR{0%{opacity:0;transform:translateX(-160%)}20%{opacity:1}100%{opacity:0;transform:translateX(60%)}}
+@keyframes goL{0%{opacity:0;transform:translateX(60%)}20%{opacity:1}100%{opacity:0;transform:translateX(-160%)}}
+.seg{display:inline-flex;border:2px solid var(--ink);margin-bottom:.5em}
+.seg button{background:transparent;border:0;padding:.5em 1em;font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* RAM */
+.ram{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;max-width:560px;margin:1em 0}
+.cell{border:1.5px solid var(--line);background:var(--panel);aspect-ratio:1.4;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--mono);font-size:.78rem;color:var(--ink-soft);transition:background .3s,border-color .3s}
+.cell b{font-size:1.25rem;color:var(--ink)}
+.cell.used{border:2px solid var(--margin);background:var(--code-bg)}
+.cell.used .nm{color:var(--margin);font-weight:600}
+.btn{border:2px solid var(--ink);background:var(--panel);padding:.55em 1.1em;font-weight:600;box-shadow:3px 3px 0 var(--ink);transition:transform .1s, box-shadow .1s}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.primary{background:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:.6em;align-items:center;margin:.6em 0}
+input[type=number],input[type=text]{font-family:var(--mono);font-size:1rem;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.45em .6em;width:7em}
+.log{font-family:var(--mono);font-size:.95rem;min-height:1.5em;color:var(--ink-soft)}
+
+/* dzielenie */
+.divrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1em;margin-top:1em;max-width:560px}
+.res{border:2px dashed var(--line);padding:.8em;font-family:var(--mono)}
+.res .big{font-size:1.8rem;font-weight:600;color:var(--ink)}
+
+/* przypisanie stepper */
+.assign{font-family:var(--mono);font-size:clamp(1rem,1.8vw,1.25rem)}
+.assign .st{padding:.35em .6em;border-left:4px solid transparent}
+.assign .st.on{border-left-color:var(--margin);background:var(--code-bg)}
+.xbox{display:inline-flex;flex-direction:column;align-items:center;border:2px solid var(--margin);padding:.6em 1.4em;font-family:var(--mono);margin-top:1em}
+.xbox b{font-size:2.4rem}
+
+/* plan programu */
+.flow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;max-width:960px;margin:1.5em 0;counter-reset:f}
+@media (max-width:700px){.flow{grid-template-columns:1fr}}
+.flow > div{border:2px solid var(--ink);margin:-1px;padding:1.2em;background:var(--panel);position:relative}
+.flow h3{margin:0 0 .3em;font-size:1.3rem}
+.flow h3::before{counter-increment:f;content:counter(f) ". ";color:var(--margin)}
+.flow code{display:block;margin-top:.6em;background:var(--code-bg);padding:.4em .6em}
+
+/* konsola */
+.console{background:#0E1430;color:#D8E0FF;font-family:var(--mono);font-size:clamp(.85rem,1.4vw,1rem);padding:1em;min-height:12em;border:2px solid var(--ink);box-shadow:6px 6px 0 var(--ink);white-space:pre-wrap;word-break:break-word}
+.console .bar{display:flex;gap:6px;margin:-.4em 0 .8em}
+.console .bar i{width:10px;height:10px;border-radius:50%;background:#3A4570;display:block}
+.console input{background:transparent;border:0;border-bottom:1px solid #D8E0FF;color:#FFE45C;font-family:var(--mono);font-size:inherit;width:6em;padding:0}
+.console .ret{color:#7FA0E0}
+
+/* quiz */
+.quiz{max-width:760px}
+.qnum{font-family:var(--mono);color:var(--margin)}
+.opts{display:grid;gap:.5em;margin:1em 0}
+.opts button{text-align:left;border:2px solid var(--ink);background:var(--panel);padding:.75em 1em;font-size:clamp(1rem,1.5vw,1.1rem)}
+.opts button:hover:not(:disabled){background:var(--code-bg)}
+.opts button.right{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opts button.wrong{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opts button:disabled{cursor:default}
+.fb{min-height:3em}
+
+/* podsumowanie */
+.check{list-style:none;padding:0;columns:2 280px;column-gap:2.5em;max-width:900px}
+.check li{break-inside:avoid;padding:.35em 0 .35em 1.8em;position:relative;max-width:none}
+.check li::before{content:"✓";position:absolute;left:0;color:var(--margin);font-weight:800}
+.links a{color:var(--ink);font-weight:600}
+
+/* nawigacja */
+nav.ctl{position:fixed;left:0;right:0;bottom:0;z-index:5;height:calc(72px + env(safe-area-inset-bottom,0px));padding:0 clamp(12px,3vw,32px) env(safe-area-inset-bottom,0px);display:flex;align-items:center;gap:12px;background:color-mix(in srgb, var(--paper) 88%, transparent);backdrop-filter:blur(6px);border-top:2px solid var(--ink)}
+.dots{flex:1;display:flex;gap:4px;align-items:center;overflow-x:auto;padding:6px 2px}
+.dots button{flex:1;min-width:14px;height:8px;border:0;background:var(--line);padding:0}
+.dots button.done{background:var(--ink-soft)}
+.dots button.cur{background:var(--margin);height:12px}
+.navbtn{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);font-size:1.2rem;font-weight:800;display:grid;place-items:center}
+.count{font-family:var(--mono);font-size:.9rem;min-width:4.2em;text-align:center}
+.theme{width:44px;height:44px;border:2px solid var(--ink);background:var(--panel)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.flowc{display:grid;gap:12px;max-width:540px;justify-items:center;margin:1em 0}
+.dec{border:2px solid var(--ink);background:var(--panel);padding:.8em 1.4em;font-family:var(--mono);font-weight:600;border-radius:40px}
+.branches{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%}
+.br{border:2px solid var(--line);padding:.8em;text-align:center;background:var(--panel);transition:background .3s,border-color .3s}
+.br b{display:block;font-family:var(--mono);color:var(--margin)}
+.br.on{border-color:var(--margin);background:var(--marker);color:#1D2A5C}
+.br.on b{color:#1D2A5C}
+.tbl{border-collapse:collapse;font-family:var(--mono);font-size:clamp(.9rem,1.4vw,1.05rem)}
+.tbl td,.tbl th{border:1.5px solid var(--line);padding:.45em .9em;text-align:left;background:var(--panel)}
+.tbl th{font-family:var(--sans)}
+.chip{display:inline-block;padding:.1em .7em;border-radius:99px;font-weight:600;color:#fff;font-family:var(--mono)}
+.chip.t{background:var(--ok)}.chip.f{background:var(--bad)}
+.tog{display:inline-flex;align-items:center;gap:.5em;border:2px solid var(--ink);background:var(--panel);padding:.45em .9em;font-weight:600}
+.tog[aria-pressed="true"]{background:var(--ok);color:#fff;border-color:var(--ok)}
+.tog[aria-pressed="false"]{background:var(--bad);color:#fff;border-color:var(--bad)}
+.bars{display:flex;align-items:flex-end;gap:10px;height:200px;max-width:560px;border-bottom:2px solid var(--ink);margin:2em 0 .3em}
+.bars div{flex:1;background:var(--ink);position:relative;transition:height .4s;min-height:2px}
+.bars div span{position:absolute;top:-1.5em;left:0;right:0;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--ink)}
+.blabels{display:flex;gap:10px;max-width:560px;font-family:var(--mono)}
+.blabels span{flex:1;text-align:center}
+.out{font-family:var(--mono);background:#0E1430;color:#D8E0FF;padding:.8em 1em;border:2px solid var(--ink);white-space:pre-wrap;word-break:break-word;min-height:3em;max-height:14em;overflow:auto;font-size:clamp(.85rem,1.4vw,1rem)}
+.out .warn{color:#FF8E86}
+select{font:inherit;border:2px solid var(--ink);background:var(--panel);color:var(--ink);padding:.4em}
+input[type=range]{width:100%;max-width:420px;accent-color:var(--margin)}
+.part{background:none;border:0;border-bottom:3px solid var(--margin);font-family:var(--mono);font-size:inherit;padding:0 .15em;color:inherit;cursor:pointer}
+.part:hover{background:var(--grid)}
+.part.on{background:var(--marker);color:#1D2A5C}
+.part.on span{color:#1D2A5C}
+.big-num{font-family:var(--mono);font-size:clamp(2rem,6vw,4rem);font-weight:600;letter-spacing:-.02em}
+.trace{max-height:16em;overflow:auto}
+.trace .tbl td{padding:.3em .7em}
+.trace tr.now td{background:var(--marker);color:#1D2A5C}
+.pane h3{margin:.2em 0 .5em}
+label.inl{display:inline-flex;align-items:center;gap:.4em}
+
+/* ===== Układ pełnoekranowy (rzutnik, tablica) ===== */
+.inner{max-width:min(1800px,100%)}
+.lead{max-width:95ch}
+.two{grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:clamp(20px,3vw,60px)}
+@media (max-width:820px){.two{grid-template-columns:1fr}}
+/* elementy, które miały sztywną maks. szerokość, rozciągają się na całą kolumnę */
+.inner [style*="max-width"]{max-width:none!important}
+.ram,.bars,.blabels,.check,.flow,.divrow,.streams{max-width:none}
+.agenda,.quiz{max-width:1200px}
+/* linie kodu: zawijanie zamiast przewijania, numer linii w stałej kolumnie, zachowane spacje */
+.codebox{overflow-x:visible}
+.codebox .ln{display:block;position:relative;width:100%;padding:.28em .8em .28em 3em;white-space:pre-wrap;overflow-wrap:anywhere;text-align:left}
+.codebox .ln::before{position:absolute;left:.8em;top:.28em;width:2em}
+/* większe pismo na dużych ekranach */
+@media (min-width:1400px){html{font-size:17px}}
+@media (min-width:1750px){html{font-size:19px}}
+@media (min-width:2300px){html{font-size:23px}}
+@media (min-width:1400px){
+  p,li{font-size:clamp(1rem,1.15vw,1.3rem);max-width:80ch}
+  .codebox{font-size:clamp(.9rem,1.05vw,1.2rem)}
+  .out,.console,.tbl{font-size:clamp(.9rem,.95vw,1.1rem)}
+}
+/* nagłówki skalowane także do wysokości ekranu (niskie rzutniki 720p) */
+h1{font-size:clamp(2.2rem,min(7vw,11vh),5.2rem)}
+h2{font-size:clamp(1.6rem,min(4.2vw,6.5vh),3rem)}
+@media (max-height:800px){
+  .slide{padding-top:clamp(14px,3vh,28px)}
+  h1,h2{margin-bottom:.35em}
+  p,li{line-height:1.45}
+  .row{margin:.4em 0}
+  .title-code{margin:.7em 0}
+  .codebox .ln{padding-top:.2em;padding-bottom:.2em}
+  .codebox .ln::before{top:.2em}
+}
+@media (max-height:800px){.check li{padding:.2em 0 .2em 1.8em}}
+
+</style>
+</head>
+<body>
+<main class="deck" id="deck">
+<section class="slide" data-title="Start"><div class="inner">
+  <p class="note">Zaawansowane Aplikacje Webowe · powtórka JavaScript</p>
+  <h1>Instrukcja<br>warunkowa if</h1>
+  <div class="title-code"><span class="k">if</span> (wiek &lt; <span class="n">6</span>) { cenaBiletu = <span class="n">0</span>; }<span class="cursor"></span></div>
+  <p class="lead">Program przestaje być listą poleceń i zaczyna podejmować decyzje. Przykład z lekcji: cena biletu zależna od wieku pasażera.</p>
+  <div class="row"><label class="inl">wiek = <input type="number" id="sWiek" value="4"></label><button class="btn primary" id="sRun">Uruchom</button></div>
+  <div class="out" id="sOut"></div>
+  <p class="meta">Sterowanie: strzałki ← →, spacja lub przyciski na dole.</p>
+</div></section>
+
+<section class="slide" data-title="Plan"><div class="inner">
+  <h2>Co powtórzymy</h2>
+  <p class="lead">Kliknij temat, aby do niego przejść.</p>
+  <ul class="agenda">
+   <li><button data-go="2"><span class="t">else if</span>Kasa biletowa: pierwszy prawdziwy warunek</button></li>
+   <li><button data-go="3"><span class="t">=== &lt;</span>Operatory porównania</button></li>
+   <li><button data-go="4"><span class="t">&amp;&amp; || !</span>Łączenie warunków</button></li>
+   <li><button data-go="5"><span class="t">kolejność</span>Ułóż warunki we właściwej kolejności</button></li>
+   <li><button data-go="6"><span class="t">bugi</span>Znajdź 3 błędy</button></li>
+   <li><button data-go="7"><span class="t">?</span>Quiz</button></li>
+  </ul>
+</div></section>
+
+<section class="slide" data-title="else if"><div class="inner">
+  <h2>Kasa biletowa: wygrywa pierwszy prawdziwy warunek</h2>
+  <p class="lead">Warunki sprawdzane są od góry. Wylosuj pasażera, zgadnij cenę, a potem zobacz, którą drogą poszedł program.</p>
+  <div class="two">
+   <div class="codebox" id="kKasa">
+    <div class="ln" data-n="1"><span class="k">if</span> (wiek &lt; <span class="n">6</span>) {</div>
+    <div class="ln" data-n="2">    cenaBiletu = <span class="n">0</span>;</div>
+    <div class="ln" data-n="3">} <span class="k">else if</span> (wiek &lt; <span class="n">12</span>) {</div>
+    <div class="ln" data-n="4">    cenaBiletu = <span class="n">3</span>;</div>
+    <div class="ln" data-n="5">} <span class="k">else if</span> (wiek &lt; <span class="n">18</span>) {</div>
+    <div class="ln" data-n="6">    cenaBiletu = <span class="n">4</span>;</div>
+    <div class="ln" data-n="7">} <span class="k">else</span> {</div>
+    <div class="ln" data-n="8">    cenaBiletu = <span class="n">6</span>;</div>
+    <div class="ln" data-n="9">}</div>
+   </div>
+   <div>
+    <div class="row"><label class="inl">wiek = <input type="number" id="kWiek" value="11" min="0"></label><button class="btn" id="kLos">Losuj pasażera</button></div>
+    <p>Ile zapłaci?</p>
+    <div class="seg" id="kSeg"><button data-c="0" aria-pressed="false">0 zł</button><button data-c="3" aria-pressed="false">3 zł</button><button data-c="4" aria-pressed="false">4 zł</button><button data-c="6" aria-pressed="false">6 zł</button></div>
+    <p id="kWynik"></p>
+    <table class="tbl" style="width:100%" id="kTbl"></table>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Porównania"><div class="inner">
+  <h2>Operatory porównania dają true albo false</h2>
+  <div class="two">
+   <div>
+    <p>Wpisz dwie wartości i wybierz ich typ. Zobacz, czym różni się <code>===</code> od <code>==</code>.</p>
+    <div class="row"><label class="inl">a = <input id="ca" value="5"></label><select id="cta"><option value="n">liczba</option><option value="s" selected>tekst</option></select></div>
+    <div class="row"><label class="inl">b = <input id="cb" value="5"></label><select id="ctb"><option value="n" selected>liczba</option><option value="s">tekst</option></select></div>
+    <table class="tbl" style="width:100%" id="cmpTbl"></table>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Przewidź wynik</h3>
+    <table class="tbl" style="width:100%" id="przTbl"></table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="przSpr">Sprawdź</button></div>
+    <p id="przWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="&& || !"><div class="inner">
+  <h2>Łączenie warunków: kto wejdzie na koncert?</h2>
+  <p class="lead">Regulamin: wchodzą pełnoletni, a od 16 lat także osoby ze zgodą rodzica.</p>
+  <div class="two">
+   <div>
+    <div class="codebox">
+     <div class="ln" data-n="1"><span class="k">if</span> (wiek &gt;= <span class="n">18</span> || (wiek &gt;= <span class="n">16</span> &amp;&amp; zgoda)) {</div>
+     <div class="ln" data-n="2">    console.log(<span class="s">"Zapraszamy!"</span>);</div>
+     <div class="ln" data-n="3">} <span class="k">else</span> {</div>
+     <div class="ln" data-n="4">    console.log(<span class="s">"Niestety nie"</span>);</div>
+     <div class="ln" data-n="5">}</div>
+    </div>
+    <div class="row" style="margin-top:.8em"><label class="inl">wiek = <input type="number" id="lWiek" value="17"></label><button class="tog" id="lZgoda" aria-pressed="true">zgoda</button></div>
+    <div class="out" id="lOut"></div>
+   </div>
+   <div>
+    <h3 style="margin-top:0">Twoja kolej: wejdzie czy nie?</h3>
+    <table class="tbl" style="width:100%" id="kTab"></table>
+    <div class="row" style="margin-top:.8em"><button class="btn primary" id="kSpr">Sprawdź</button></div>
+    <p id="kTabWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Kolejność"><div class="inner">
+  <h2>Ułóż warunki we właściwej kolejności</h2>
+  <p class="lead">Ktoś pomieszał gałęzie. Przesuwaj je strzałkami, aż każdy pasażer dostanie dobrą cenę.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kOrd"></div>
+    <p class="meta">Zasada: węższy warunek (mniejsza grupa) musi stać wyżej.</p>
+   </div>
+   <div>
+    <table class="tbl" style="width:100%" id="ordTbl"></table>
+    <p id="ordWynik"></p>
+   </div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Znajdź błędy"><div class="inner">
+  <h2>Znajdź 3 błędy</h2>
+  <p class="lead">Kliknij linijki z błędem, potem „Sprawdź”.</p>
+  <div class="two">
+   <div>
+    <div class="codebox" id="kBug">
+     <button class="ln" data-n="1"><span class="k">const</span> wiek = Number(prompt(<span class="s">"Podaj wiek"</span>));</button>
+     <button class="ln" data-n="2"><span class="k">let</span> cena;</button>
+     <button class="ln" data-n="3"><span class="k">if</span> (wiek = <span class="n">18</span>) {</button>
+     <button class="ln" data-n="4">    console.log(<span class="s">"Masz dokładnie 18 lat!"</span>);</button>
+     <button class="ln" data-n="5">}</button>
+     <button class="ln" data-n="6"><span class="k">if</span> (wiek &lt; <span class="n">6</span>) {</button>
+     <button class="ln" data-n="7">    cena = <span class="n">0</span>;</button>
+     <button class="ln" data-n="8">} <span class="k">else if</span> (wiek &lt; <span class="n">18</span>) {</button>
+     <button class="ln" data-n="9">    cena = <span class="n">4</span>;</button>
+     <button class="ln" data-n="10">} <span class="k">else if</span> (wiek &lt; <span class="n">12</span>) {</button>
+     <button class="ln" data-n="11">    cena = <span class="n">3</span>;</button>
+     <button class="ln" data-n="12">} <span class="k">else</span> (wiek &gt;= <span class="n">65</span>) {</button>
+     <button class="ln" data-n="13">    cena = <span class="n">2</span>;</button>
+     <button class="ln" data-n="14">}</button>
+    </div>
+    <div class="row" style="margin-top:1em"><button class="btn primary" id="bugSpr">Sprawdź</button><button class="btn" id="bugReset">Od nowa</button></div>
+   </div>
+   <div class="explain" id="bugEx"><p class="note">← zaznacz 3 linijki</p></div>
+  </div>
+</div></section>
+
+<section class="slide" data-title="Quiz"><div class="inner quiz" id="quiz"></div></section>
+
+<section class="slide" data-title="Podsumowanie"><div class="inner">
+  <h2>Do zapamiętania</h2>
+  <ul class="check">
+   <li><code>if (warunek) { … }</code> wykonuje blok tylko, gdy warunek jest prawdziwy.</li>
+   <li>W łańcuchu <code>else if</code> wygrywa pierwszy prawdziwy warunek, reszta jest pomijana.</li>
+   <li>Węższy warunek stawiamy wyżej (<code>&lt; 6</code> przed <code>&lt; 12</code> przed <code>&lt; 18</code>).</li>
+   <li><code>else</code> nie ma warunku i łapie całą resztę.</li>
+   <li>Porównujemy przez <code>===</code> i <code>!==</code>; <code>=</code> to przypisanie.</li>
+   <li><code>"5" === 5</code> to <code>false</code>, dlatego wynik <code>prompt</code> zamieniamy przez <code>Number()</code>.</li>
+   <li><code>&amp;&amp;</code>: oba warunki, <code>||</code>: choć jeden, <code>!</code>: odwrócenie.</li>
+  </ul>
+  <p class="links">Dokumentacja: <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Reference/Statements/if...else" target="_blank" rel="noopener">MDN: if…else</a> · <a href="https://developer.mozilla.org/pl/docs/Web/JavaScript/Guide/Expressions_and_operators" target="_blank" rel="noopener">MDN: operatory</a></p>
+  <p class="note">Dalej: tablice i metody map, filter</p>
+</div></section>
+
+</main>
+<nav class="ctl" aria-label="Nawigacja prezentacji">
+ <button class="navbtn" id="prev" aria-label="Poprzedni slajd">‹</button>
+ <div class="dots" id="dots"></div>
+ <span class="count" id="count"></span>
+ <button class="navbtn" id="next" aria-label="Następny slajd">›</button>
+ <button class="theme" id="theme" aria-label="Zmień motyw jasny/ciemny">◐</button>
+</nav>
+
+<script>
+(function(){
+const KEY='zaw-instrukcja-if-js';
+const $=id=>document.getElementById(id);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const slides=[...document.querySelectorAll('.slide')];
+const dots=$('dots'),count=$('count');
+let cur=0;
+slides.forEach((s,i)=>{const b=document.createElement('button');b.setAttribute('aria-label',(i+1)+'. '+s.dataset.title);b.title=s.dataset.title;b.onclick=()=>go(i);dots.appendChild(b)});
+function go(i){
+  i=Math.max(0,Math.min(slides.length-1,i));cur=i;
+  slides.forEach((s,k)=>{s.classList.toggle('active',k===i);s.classList.toggle('before',k<i);s.setAttribute('aria-hidden',k!==i)});
+  [...dots.children].forEach((d,k)=>{d.className=k===i?'cur':(k<i?'done':'')});
+  count.textContent=(i+1)+' / '+slides.length;
+  try{history.replaceState(null,'','#'+(i+1))}catch(e){}
+  try{localStorage.setItem(KEY+'-slide',i)}catch(e){}
+}
+$('prev').onclick=()=>go(cur-1);$('next').onclick=()=>go(cur+1);
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select'))return;
+  if(e.key==='ArrowRight'||e.key==='PageDown'||(e.key===' '&&!e.target.matches('button'))){e.preventDefault();go(cur+1)}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1)}
+  if(e.key==='Home')go(0);if(e.key==='End')go(slides.length-1);
+});
+let tx=null;
+document.addEventListener('touchstart',e=>{tx=e.touches[0].clientX},{passive:true});
+document.addEventListener('touchend',e=>{if(tx===null)return;const dx=e.changedTouches[0].clientX-tx;if(Math.abs(dx)>70&&!e.target.closest('.codebox,.console,.out,input,.bars'))go(cur+(dx<0?1:-1));tx=null},{passive:true});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(+b.dataset.go));
+const root=document.documentElement;
+$('theme').onclick=()=>{const dark=root.dataset.theme?root.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;root.dataset.theme=dark?'light':'dark';try{localStorage.setItem('cppkurs-theme',root.dataset.theme)}catch(e){}};
+try{const t=localStorage.getItem('cppkurs-theme');if(t)root.dataset.theme=t}catch(e){}
+
+function bindExplain(boxId,outId,map){
+  const box=$(boxId),out=$(outId);
+  box.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>{
+    box.querySelectorAll('[data-ex]').forEach(x=>x.classList.remove('on'));
+    box.querySelectorAll('[data-ex="'+b.dataset.ex+'"]').forEach(x=>x.classList.add('on'));
+    const e=map[b.dataset.ex];out.innerHTML='<h3>'+e[0]+'</h3><p>'+e[1]+'</p>';
+  });
+}
+function hlLines(boxId,set){$(boxId).querySelectorAll('.ln').forEach(l=>l.classList.toggle('on',set.includes(+l.dataset.n)))}
+function makeQuiz(el,Q){
+  let qi=0,score=0;
+  function show(){
+    if(qi>=Q.length){
+      el.innerHTML='<h2>Wynik: '+score+' / '+Q.length+'</h2><p class="lead">'+(score===Q.length?'Komplet! Możesz śmiało ruszać do kolejnego odcinka.':score>=Q.length-2?'Bardzo dobrze. Przejrzyj jeszcze slajdy z pytań, w których był błąd.':'Warto wrócić do wcześniejszych slajdów, a potem spróbować ponownie.')+'</p><div class="row"><button class="btn primary" id="qAgain">Spróbuj ponownie</button></div>';
+      $('qAgain').onclick=()=>{qi=0;score=0;show()};return;
+    }
+    const q=Q[qi];
+    el.innerHTML='<p class="qnum">Pytanie '+(qi+1)+' z '+Q.length+'</p><h2>'+esc(q[0])+'</h2>'+(q[4]?'<div class="codebox" style="max-width:640px;margin-bottom:.5em">'+q[4].split('\n').map((l,k)=>'<div class="ln" data-n="'+(k+1)+'">'+esc(l)+'</div>').join('')+'</div>':'')+'<div class="opts"></div><p class="fb" aria-live="polite"></p><div class="row"><button class="btn primary" id="qNext" hidden>'+(qi===Q.length-1?'Pokaż wynik':'Następne pytanie')+'</button></div>';
+    const o=el.querySelector('.opts'),fb=el.querySelector('.fb'),nx=$('qNext');
+    q[1].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;
+      b.onclick=()=>{[...o.children].forEach((x,k)=>{x.disabled=true;if(k===q[2])x.classList.add('right')});
+        if(i===q[2]){score++;fb.innerHTML='<b>Dobrze!</b> '+q[3]}else{b.classList.add('wrong');fb.innerHTML='<b>Nie tym razem.</b> '+q[3]}
+        nx.hidden=false;nx.focus()};o.appendChild(b)});
+    nx.onclick=()=>{qi++;show()};
+  }
+  show();
+}
+
+// pomocnicze
+const ok=t=>'<span class="chip t">✓</span> '+t, zle=t=>'<span class="chip f">✗</span> '+t;
+const chip=v=>'<span class="chip '+(v?'t':'f')+'">'+v+'</span>';
+function wybory(tblId,sprId,outId,naglowki,opcje,items){
+  const wyb=items.map(()=>null);
+  $(tblId).innerHTML='<tr>'+naglowki.map(h=>'<th>'+h+'</th>').join('')+'</tr>'+items.map((it,i)=>'<tr><td>'+it[0]+'</td><td><div class="seg">'+opcje.map((o,j)=>'<button data-i="'+i+'" data-j="'+j+'" aria-pressed="false">'+o+'</button>').join('')+'</div></td><td id="'+tblId+'R'+i+'"></td></tr>').join('');
+  $(tblId).querySelectorAll('button').forEach(b=>b.onclick=()=>{wyb[+b.dataset.i]=+b.dataset.j;
+    b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));});
+  $(sprId).onclick=()=>{let p=0;
+    items.forEach((it,i)=>{const r=$(tblId+'R'+i);
+      if(wyb[i]===null){r.textContent='—';return;}
+      if(wyb[i]===it[1]){p++;r.innerHTML=ok(it[2]);} else r.innerHTML=zle(it[2]);});
+    $(outId).innerHTML='Wynik: <b>'+p+' / '+items.length+'</b>'+(p===items.length?' — bez pomyłki!':'');};
+}
+function bugHunt(boxId,sprId,resetId,outId,grupy,opisy){
+  const lns=[...$(boxId).querySelectorAll('.ln')],bledne=new Set(grupy.flat());
+  lns.forEach(l=>l.onclick=()=>l.classList.toggle('on'));
+  $(sprId).onclick=()=>{
+    const sel=lns.filter(l=>l.classList.contains('on')).map(l=>+l.dataset.n);
+    let traf=0;
+    const lista=grupy.map((g,i)=>{const t=g.some(n=>sel.includes(n));if(t)traf++;
+      return '<li>'+(t?ok(''):'<span class="chip f">pominięty</span> ')+opisy[i]+'</li>';});
+    const obok=sel.filter(n=>!bledne.has(n));
+    lns.forEach(l=>{const n=+l.dataset.n;
+      l.style.background=bledne.has(n)?(sel.includes(n)?'rgba(46,160,90,.22)':'rgba(240,170,0,.28)'):(sel.includes(n)?'rgba(220,60,60,.22)':'');});
+    $(outId).innerHTML='<h3>Znalezione: '+traf+' z '+grupy.length+'</h3>'+(obok.length?'<p>Linie bez błędu: '+obok.join(', ')+'</p>':'')+'<ul>'+lista.join('')+'</ul>';
+  };
+  $(resetId).onclick=()=>{lns.forEach(l=>{l.classList.remove('on');l.style.background='';});
+    $(outId).innerHTML='<p class="note">← zaznacz '+grupy.length+' linijki</p>';};
+}
+function cenaDla(w){if(w<6)return 0;if(w<12)return 3;if(w<18)return 4;return 6;}
+
+// start
+$('sRun').onclick=()=>{const v=$('sWiek').value;
+  $('sOut').textContent=v===''?'Wpisz wiek.':'> Cena biletu: '+cenaDla(Number(v))+' zł';};
+
+// kasa biletowa
+const KASA=[[6,0,[1,2]],[12,3,[3,4]],[18,4,[5,6]]];
+function sciezka(w){const rows=[];
+  for(const [g,c,l] of KASA){const t=w<g;rows.push([w+' < '+g,chip(t)]);if(t)return{rows,cena:c,linie:l};}
+  rows.push(['else (bez warunku)','wykonuje blok']);return{rows,cena:6,linie:[7,8]};}
+function resetKasa(){hlLines('kKasa',[]);$('kTbl').innerHTML='';$('kWynik').textContent='';
+  $('kSeg').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));}
+$('kWiek').oninput=resetKasa;
+$('kLos').onclick=()=>{const L=[2,5,6,8,11,12,14,17,18,30,45,70];$('kWiek').value=L[Math.floor(Math.random()*L.length)];resetKasa();};
+$('kSeg').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('kSeg').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  const v=$('kWiek').value;if(v===''){$('kWynik').textContent='Najpierw wpisz wiek.';return;}
+  const w=Number(v),s=sciezka(w),strzal=+b.dataset.c;
+  hlLines('kKasa',s.linie);
+  $('kWynik').innerHTML=strzal===s.cena?ok('Dobrze, '+s.cena+' zł.'):zle('Nie. Pasażer w wieku '+w+' lat płaci '+s.cena+' zł. Zobacz w tabeli, które warunki sprawdził program.');
+  $('kTbl').innerHTML='<tr><th>sprawdzany warunek</th><th>wynik</th></tr>'+s.rows.map(r=>'<tr><td class="mono">'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('')+(s.rows.length<4?'<tr><td colspan="2" class="meta">dalsze gałęzie pominięte</td></tr>':'');
+});
+
+// porównania
+const wartosc=(v,t)=>t==='n'?Number(v):String(v);
+const pokaz=v=>typeof v==='string'?'"'+esc(v)+'"':String(v);
+function upCmp(){const a=wartosc($('ca').value,$('cta').value),b=wartosc($('cb').value,$('ctb').value);
+  const ops=[['===',a===b],['!==',a!==b],['<',a<b],['>',a>b],['<=',a<=b],['>=',a>=b],['==',a==b]];
+  $('cmpTbl').innerHTML='<tr><th>wyrażenie</th><th>wynik</th></tr>'+ops.map(o=>'<tr><td class="mono">'+pokaz(a)+' '+esc(o[0])+' '+pokaz(b)+'</td><td>'+chip(o[1])+(o[0]==='=='?' <span class="meta">zamienia typy, unikamy</span>':'')+'</td></tr>').join('');}
+['ca','cb'].forEach(id=>$(id).oninput=upCmp);['cta','ctb'].forEach(id=>$(id).onchange=upCmp);upCmp();
+wybory('przTbl','przSpr','przWynik',['wyrażenie','twoja odpowiedź',''],['true','false'],[
+  ['<code>"5" === 5</code>',1,'różne typy: tekst i liczba'],
+  ['<code>"5" == 5</code>',0,'== zamienia tekst na liczbę'],
+  ['<code>3 &gt;= 3</code>',0,'równość też spełnia &gt;='],
+  ['<code>10 !== 10</code>',1,'są równe, więc „różne” to fałsz'],
+  ['<code>2 + 2 === 4</code>',0,'najpierw dodawanie, potem porównanie']
+]);
+
+// && || !
+function upKon(){const v=$('lWiek').value;if(v===''){$('lOut').textContent='Wpisz wiek.';return;}
+  const w=Number(v),z=$('lZgoda').getAttribute('aria-pressed')==='true',a=w>=18,b=w>=16,bz=b&&z,res=a||bz;
+  $('lOut').innerHTML=w+' &gt;= 18 || ('+w+' &gt;= 16 &amp;&amp; '+z+')\n= '+a+' || ('+b+' &amp;&amp; '+z+')\n= '+a+' || '+bz+'\n= <b>'+res+'</b>  →  '+(res?'Zapraszamy!':'Niestety nie')+
+    (a?'\n<span class="warn">Lewa strona || to już true, więc prawej JS nawet nie sprawdza.</span>':'');}
+$('lWiek').oninput=upKon;
+$('lZgoda').onclick=()=>{const b=$('lZgoda');b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');upKon();};upKon();
+wybory('kTab','kSpr','kTabWynik',['osoba','twoja odpowiedź',''],['wejdzie','nie wejdzie'],[
+  ['Filemon, 17 lat, zgoda: tak',0,'16+ i jest zgoda'],
+  ['Bonifacy, 15 lat, zgoda: tak',1,'poniżej 16, zgoda nie pomoże'],
+  ['Mruczek, 19 lat, zgoda: nie',0,'pełnoletni, zgoda niepotrzebna'],
+  ['Puszek, 16 lat, zgoda: nie',1,'16+, ale bez zgody']
+]);
+
+// kolejność warunków
+let ord=[[18,4],[6,0],[12,3]];
+const TESTY=[4,9,15,30];
+function cenaOrd(w){for(const [g,c] of ord) if(w<g) return c;return 6;}
+function rysujOrd(){
+  const st=' style="padding:.05em .55em;margin-left:.4em"';
+  $('kOrd').innerHTML=ord.map((o,i)=>'<div class="ln" data-n="'+(i+1)+'">'+(i?'} <span class="k">else if</span>':'<span class="k">if</span>')+' (wiek &lt; <span class="n">'+o[0]+'</span>) { cena = <span class="n">'+o[1]+'</span>;'+
+    '<button class="btn" data-up="'+i+'"'+st+(i===0?' disabled':'')+' aria-label="w górę">↑</button><button class="btn" data-dn="'+i+'"'+st+(i===ord.length-1?' disabled':'')+' aria-label="w dół">↓</button></div>').join('')+
+    '<div class="ln" data-n="4">} <span class="k">else</span> { cena = <span class="n">6</span>; }</div>';
+  $('kOrd').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const i=+(b.dataset.up??b.dataset.dn),j=b.dataset.up!==undefined?i-1:i+1;
+    if(j<0||j>=ord.length)return;[ord[i],ord[j]]=[ord[j],ord[i]];rysujOrd();});
+  let dobre=0;
+  $('ordTbl').innerHTML='<tr><th>wiek</th><th>powinien zapłacić</th><th>program daje</th></tr>'+TESTY.map(w=>{const d=cenaDla(w),p=cenaOrd(w);if(d===p)dobre++;
+    return '<tr><td>'+w+'</td><td>'+d+' zł</td><td>'+(d===p?ok(p+' zł'):zle(p+' zł'))+'</td></tr>';}).join('');
+  $('ordWynik').innerHTML=dobre===TESTY.length?ok('<b>Brawo!</b> Kolejność: &lt; 6, potem &lt; 12, potem &lt; 18. Każda gałąź łapie tylko „swoich” pasażerów.'):'Dobrze obsłużeni: <b>'+dobre+' / '+TESTY.length+'</b>. Szukaj warunku, który „zjada” młodszych pasażerów.';
+}
+rysujOrd();
+
+// znajdź błędy
+bugHunt('kBug','bugSpr','bugReset','bugEx',[[3],[8,10],[12]],[
+  'Linia 3: <code>=</code> przypisuje zamiast porównywać (a do <code>const</code> nie wolno przypisać, więc to TypeError). Poprawnie: <code>wiek === 18</code>.',
+  'Linie 8 i 10: <code>wiek &lt; 12</code> stoi za <code>wiek &lt; 18</code>, więc ta gałąź nigdy się nie wykona. Zamień je miejscami.',
+  'Linia 12: <code>else</code> nie przyjmuje warunku, to błąd składni. Poprawnie: <code>} else if (wiek &gt;= 65) {</code>.'
+]);
+
+// quiz
+makeQuiz($('quiz'),[
+  ['Co wypisze ten kod dla wiek = 10?',['A','B','C','B i C'],1,'10 < 6 to fałsz, 10 < 12 to prawda. Wykonuje się pierwsza prawdziwa gałąź.','if (wiek < 6) console.log("A");\nelse if (wiek < 12) console.log("B");\nelse console.log("C");'],
+  ['Który operator sprawdza, czy wartości są równe i mają ten sam typ?',['=','==','=>','==='],3,'=== to ścisła równość. == zamienia typy przed porównaniem, a = przypisuje.'],
+  ['Jaki jest wynik porównania?',['false','true','7','błąd składni'],0,'Lewa strona to tekst, prawa liczba. Ścisła równość wymaga tego samego typu.','"7" === 7'],
+  ['Kiedy warunek a && b jest prawdziwy?',['Gdy choć jeden jest prawdziwy','Gdy oba są prawdziwe','Gdy oba są fałszywe','Zawsze'],1,'&& to „i”: muszą być spełnione oba warunki.'],
+  ['Co jest nie tak w tym warunku?',['Brakuje średnika','Brakuje else','= przypisuje zamiast porównywać','Nic, kod jest poprawny'],2,'Pojedyncze = wpisuje 18 do zmiennej. Porównanie to ===.','if (wiek = 18) { … }'],
+  ['Kiedy warunek a || b jest fałszywy?',['Gdy a jest prawdziwe','Gdy b jest prawdziwe','Gdy oba są fałszywe','Nigdy'],2,'Wystarczy jeden prawdziwy warunek, więc fałsz wychodzi tylko przy dwóch fałszach.'],
+  ['Którą gałąź można zostawić bez warunku?',['if','else if','żadną','else'],3,'else nie ma warunku: łapie wszystko, czego nie złapały gałęzie wyżej.']
+]);
+
+let start=0;const h=parseInt(location.hash.slice(1));
+if(h>0)start=h-1;else{try{const s=localStorage.getItem(KEY+'-slide');if(s)start=+s}catch(e){}}
+go(start);
+
+})();
+</script>
+<!-- materialy.py: poprawki nawigacji prezentacji (ankieta uczniów 10.2026), wklejane przed </body> po build.py skilla -->
+<style>
+.dots button,.dots button.done,.dots button.cur{height:28px;padding:10px 0;background-clip:content-box}
+.dots button.cur{padding:8px 0}
+.navbtn{width:52px;height:52px;font-size:1.5rem}
+textarea,input,code,pre,.codebox{font-variant-ligatures:none}
+.navhint{font-family:var(--mono);font-size:.8rem;color:var(--ink-soft);white-space:nowrap}
+.navhint[hidden]{display:none}
+@media (max-width:560px){.navhint{display:none}}
+.quiz .opts{counter-reset:opt}
+.quiz .opts button{counter-increment:opt;display:flex;align-items:baseline;gap:.6em;white-space:pre-wrap}
+.quiz h2{white-space:pre-wrap}
+.quiz .opts button::before{content:counter(opt);flex:none;display:inline-grid;place-items:center;width:1.7em;height:1.7em;border:2px solid currentColor;font-family:var(--mono);font-size:.85em;font-weight:600}
+.quiz .qnum::after{content:" · odpowiedź: klawisz 1–4, dalej: Enter";color:var(--ink-soft);font-size:.85em}
+@media (hover:none){.quiz .qnum::after{content:none}}
+</style>
+<script>
+(function () {
+  var next = document.getElementById("next"), prev = document.getElementById("prev"), nav = document.querySelector("nav.ctl");
+  if (!next || !prev || !nav) return;
+  var hint = document.createElement("span");
+  hint.className = "navhint";
+  hint.hidden = true;
+  hint.textContent = "Esc — wróć do slajdów";
+  nav.insertBefore(hint, document.getElementById("count"));
+  function field(t) { return !!t && (t.isContentEditable || (t.matches && t.matches("input,select,textarea"))); }
+  function stop(e) { e.stopPropagation(); }
+  // Klawisz w polu do pisania nie może dojść do nawigacji skilla (ona pomija tylko input/select, więc spacja
+  // w <textarea> przełączała slajd). Faza przechwytywania: Esc oddaje klawiaturę slajdom, PageDown/PageUp
+  // i Alt+strzałki przełączają z pola; resztę zatrzymuje jednorazowy słuchacz na samym polu — po obsłudze
+  // przez stronę, przed nawigacją na document.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (!field(t)) return;
+    if (e.key === "Escape") { e.preventDefault(); t.blur(); }
+    else if (e.key === "PageDown" || (e.altKey && e.key === "ArrowRight")) { e.preventDefault(); t.blur(); next.click(); }
+    else if (e.key === "PageUp" || (e.altKey && e.key === "ArrowLeft")) { e.preventDefault(); t.blur(); prev.click(); }
+    else t.addEventListener("keydown", stop, {once: true});
+  }, true);
+  // Enter przełącza dalej, gdy fokus nie stoi na niczym klikalnym (przycisk, link, rozwijane) ani w polu.
+  document.addEventListener("keydown", function (e) {
+    var t = e.target;
+    if (e.key === "Enter" && !e.defaultPrevented && !field(t) && !(t.closest && t.closest("button,a,summary,label,[tabindex]"))) {
+      e.preventDefault(); next.click();
+    }
+  });
+  // Quiz skilla: cyfra wybiera odpowiedź na aktywnym slajdzie (Enter potem klika „Następne pytanie”, które ma fokus).
+  document.addEventListener("keydown", function (e) {
+    if (e.altKey || e.ctrlKey || e.metaKey || !/^[1-9]$/.test(e.key) || field(e.target)) return;
+    var opts = document.querySelector(".slide.active .quiz .opts");
+    var b = opts && opts.querySelectorAll("button")[+e.key - 1];
+    if (b && !b.disabled) { e.preventDefault(); b.click(); }
+  });
+  // Po wyborze z listy, pola wyboru albo suwaka (myszką) klawiatura wraca do slajdów.
+  document.addEventListener("change", function (e) {
+    if (e.target.matches("select,input[type=checkbox],input[type=radio]")) e.target.blur();
+  });
+  document.addEventListener("pointerup", function (e) {
+    if (e.target.matches && e.target.matches("input[type=range]")) setTimeout(function () { e.target.blur(); }, 0);
+  });
+  document.addEventListener("focusin", function (e) {
+    hint.hidden = !(field(e.target) && !(e.target.matches && e.target.matches("input[type=range],input[type=checkbox],input[type=radio]")));
+  });
+  document.addEventListener("focusout", function () { hint.hidden = true; });
+})();
+</script>
+</body>
+</html>
