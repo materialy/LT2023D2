@@ -116,14 +116,15 @@ details[open] summary{border-bottom:1.5px dashed var(--line)}
 details .ans{padding:.6em 1em .8em 2.7em}
 details .ans p{margin:.2em 0}
 details.hint{border-width:1.5px;border-style:dashed;margin:.4em 0}
-details.hint summary{font-weight:600;padding:.4em .8em;font-size:.95rem}
+details.hint summary{font-weight:600;padding:.4em .8em;font-size:.95rem;flex-wrap:nowrap}
 details.hint .ans{padding:.5em .9em .7em 2.2em}
 .lvl{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--margin);padding:.1em .5em;border-radius:99px}
 summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
 
 .footer{margin-top:3em;padding-top:1em;border-top:2px solid var(--ink);font-size:.95rem;color:var(--ink-soft)}
 
-.theme{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:5;width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-size:1.2rem;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.theme{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:5;min-width:44px;height:44px;padding:0 12px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font:600 .9rem/1 var(--sans);cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.theme span{font-size:1.2rem;vertical-align:-2px}
 
 @media (max-width:720px){
   .split{grid-template-columns:1fr}
@@ -186,7 +187,7 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </style>
 </head>
 <body>
-<button class="theme" id="theme" type="button" aria-label="Zmień motyw jasny/ciemny">◐</button>
+<button class="theme" id="theme" type="button"><span aria-hidden="true">◐</span> Ciemny motyw</button>
 <main class="sheet">
   <p class="eyebrow">Powtórka</p>
   <h1>Zaawansowane Aplikacje Webowe</h1>
@@ -254,11 +255,15 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
   }
   popraw.addEventListener("click", () => { const el = render(true); if (el && el.scrollIntoView) el.scrollIntoView({behavior: "smooth", block: "start"}); });
   document.getElementById("reset").addEventListener("click", () => { box.innerHTML = ""; render(false); window.scrollTo(0, 0); });
+  var motyw = document.getElementById("theme");   // napis mówi, na jaki motyw przełącza (sam ◐ był niezauważalny)
+  function ciemny() { return root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
+  function napis() { motyw.innerHTML = '<span aria-hidden="true">◐</span> ' + (ciemny() ? "Jasny motyw" : "Ciemny motyw"); }
   try { const t = localStorage.getItem("cppkurs-theme"); if (t) root.dataset.theme = t; } catch (e) {}
-  document.getElementById("theme").addEventListener("click", () => {
-    const dark = root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
-    root.dataset.theme = dark ? "light" : "dark";
+  napis();
+  motyw.addEventListener("click", function () {
+    root.dataset.theme = ciemny() ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
+    napis();
   });
   function start(lista) { DANE = lista; stan = DANE.map(() => null); box.innerHTML = ""; render(false); }
   if (LOS) {

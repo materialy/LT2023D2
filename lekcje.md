@@ -6,14 +6,14 @@ Najnowsze na górze. W folderze każdego zagadnienia: `sciaga.html`, `prezentacj
 
 Temat: Powtórzenie wiadomości z Javascript - obiekty
 
-- **Na lekcji:** [Tablica obiektów w JavaScript: lista obsługiwana metodami](zaw/08-tablica-obiektow-js/sciaga.html)
-- **Powtórz:** [Metody obiektu w JavaScript: funkcje w obiekcie i this](zaw/07-metody-obiektu-js/sciaga.html) · [Metody tablic map i filter w JavaScript](zaw/03-map-filter-js/sciaga.html) · [Funkcja tworząca obiekty (fabryka) w JavaScript](zaw/06-fabryka-obiektow-js/sciaga.html)
+- **Na lekcji:** [Tablica obiektów w JavaScript: lista obsługiwana metodami](zaw/08-tablica-obiektow-js/sciaga.html) (poprawiono 29.10)
+- **Powtórz:** [Metody obiektu w JavaScript: funkcje w obiekcie i this](zaw/07-metody-obiektu-js/sciaga.html) (poprawiono 29.10) · [Metody tablic map i filter w JavaScript](zaw/03-map-filter-js/sciaga.html) · [Funkcja tworząca obiekty (fabryka) w JavaScript](zaw/06-fabryka-obiektow-js/sciaga.html)
 
 ## 2026-10-21 · Zaawansowane Aplikacje Webowe
 
 Temat: Powtórzenie wiadomości z Javascript
 
-- **Na lekcji:** [Funkcja tworząca obiekty (fabryka) w JavaScript](zaw/06-fabryka-obiektow-js/sciaga.html) · [Metody obiektu w JavaScript: funkcje w obiekcie i this](zaw/07-metody-obiektu-js/sciaga.html)
+- **Na lekcji:** [Funkcja tworząca obiekty (fabryka) w JavaScript](zaw/06-fabryka-obiektow-js/sciaga.html) · [Metody obiektu w JavaScript: funkcje w obiekcie i this](zaw/07-metody-obiektu-js/sciaga.html) (poprawiono 29.10)
 - **Powtórz:** [Funkcje w JavaScript: parametry i return](zaw/05-funkcje-js/sciaga.html) · [Obiekty w JavaScript: klucze, wartości, pętla for…in](zaw/04-obiekty-js/sciaga.html)
 
 ## 2026-09-23 · Zaawansowane Aplikacje Webowe

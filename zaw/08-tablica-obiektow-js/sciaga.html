@@ -116,14 +116,15 @@ details[open] summary{border-bottom:1.5px dashed var(--line)}
 details .ans{padding:.6em 1em .8em 2.7em}
 details .ans p{margin:.2em 0}
 details.hint{border-width:1.5px;border-style:dashed;margin:.4em 0}
-details.hint summary{font-weight:600;padding:.4em .8em;font-size:.95rem}
+details.hint summary{font-weight:600;padding:.4em .8em;font-size:.95rem;flex-wrap:nowrap}
 details.hint .ans{padding:.5em .9em .7em 2.2em}
 .lvl{font-family:var(--mono);font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--margin);padding:.1em .5em;border-radius:99px}
 summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--margin);outline-offset:2px}
 
 .footer{margin-top:3em;padding-top:1em;border-top:2px solid var(--ink);font-size:.95rem;color:var(--ink-soft)}
 
-.theme{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:5;width:44px;height:44px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font-size:1.2rem;cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.theme{position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));z-index:5;min-width:44px;height:44px;padding:0 12px;border:2px solid var(--ink);background:var(--panel);color:var(--ink);font:600 .9rem/1 var(--sans);cursor:pointer;box-shadow:3px 3px 0 var(--ink)}
+.theme span{font-size:1.2rem;vertical-align:-2px}
 
 @media (max-width:720px){
   .split{grid-template-columns:1fr}
@@ -161,11 +162,11 @@ summary:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var
 </style>
 </head>
 <body>
-<button class="theme" id="theme" type="button" aria-label="Zmień motyw jasny/ciemny">◐</button>
+<button class="theme" id="theme" type="button"><span aria-hidden="true">◐</span> Ciemny motyw</button>
 <main class="sheet">
   <p class="eyebrow">Zaawansowane Aplikacje Webowe · ściąga</p>
   <h1>Tablica obiektów w JavaScript: lista obsługiwana metodami</h1>
-  <p class="links-top">{{LINKI}}<button type="button" id="drukuj">Drukuj / PDF</button></p>
+  <p class="links-top"><a href="prezentacja.html">Prezentacja</a><a href="quiz.html">Quiz</a><button type="button" id="drukuj">Drukuj / PDF</button></p>
 <nav class="toc" aria-label="Spis sekcji"><a href="#s01"><span class="no">01</span>Obiekt, w nim tablica, w niej obiekty</a><a href="#s02"><span class="no">02</span>Operacje na liście w metodach</a><a href="#s03"><span class="no">03</span>Pełny przykład</a><a href="#s04"><span class="no">04</span>Typowe błędy</a><a href="#s05"><span class="no">05</span>Słowniczek</a><a href="#s06"><span class="no">06</span>Sprawdź się</a><a href="#s07"><span class="no">07</span>Spróbuj sam</a></nav>
 <div class="card"><h3>Zanim zaczniesz</h3><ul class="check"><li>Metodę zapisujesz w obiekcie jak funkcję, a do jego danych sięgasz przez this, np. this.name.</li><li>filter zwraca nową tablicę z elementami, dla których funkcja zwróciła true.</li><li>Skrócony zapis { name, species } tworzy właściwości o nazwach i wartościach zmiennych.</li><li>t.length to liczba elementów tablicy, a t[0] to pierwszy element.</li><li>return oddaje wynik, a console.log tylko go wypisuje.</li></ul></div>
 <p class="lead">Obiekt może przechowywać tablicę innych obiektów, np. schronisko i jego zwierzęta. Metody takiego obiektu dodają elementy, wypisują je, wyszukują, liczą i czyszczą listę.</p>
@@ -318,11 +319,15 @@ shelter.showAnimals();                <span class="cm">// W schronisku nie ma zw
 <script>
 (function () {
   var root = document.documentElement;
+  var motyw = document.getElementById("theme");   // napis mówi, na jaki motyw przełącza (sam ◐ był niezauważalny)
+  function ciemny() { return root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches); }
+  function napis() { motyw.innerHTML = '<span aria-hidden="true">◐</span> ' + (ciemny() ? "Jasny motyw" : "Ciemny motyw"); }
   try { var t = localStorage.getItem("cppkurs-theme"); if (t) root.dataset.theme = t; } catch (e) {}
-  document.getElementById("theme").addEventListener("click", function () {
-    var dark = root.dataset.theme ? root.dataset.theme === "dark" : !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
-    root.dataset.theme = dark ? "light" : "dark";
+  napis();
+  motyw.addEventListener("click", function () {
+    root.dataset.theme = ciemny() ? "light" : "dark";
     try { localStorage.setItem("cppkurs-theme", root.dataset.theme); } catch (e) {}
+    napis();
   });
   document.getElementById("drukuj").addEventListener("click", function () { window.print(); });
   window.addEventListener("beforeprint", function () {
